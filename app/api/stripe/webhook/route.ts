@@ -3,13 +3,14 @@ import Stripe from 'stripe';
 import connectDB from '@/lib/mongodb';
 import Order from '@/models/Order';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-06-30.basil',
-});
-
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: NextRequest) {
+  // Ensure Stripe secret key is defined
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: 'STRIPE_SECRET_KEY environment variable is required' }, { status: 500 });
+  }
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-06-30.basil' });
   const body = await request.text();
   const sig = request.headers.get('stripe-signature');
 
