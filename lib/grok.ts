@@ -18,10 +18,10 @@ export class GrokAI {
   }
 
   private async makeRequest(messages: any[], options: any = {}): Promise<GrokResponse> {
-    if (!this.config.enabled || !this.config.apiKey) {
+    if (!this.config.apiKey) {
       return {
         success: false,
-        error: 'Grok AI is not configured or enabled',
+        error: 'Grok AI is not configured',
       };
     }
 
@@ -42,7 +42,19 @@ export class GrokAI {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || errorData.message || `HTTP error! status: ${response.status}`;
+        
+        // Provide specific error messages for common status codes
+        if (response.status === 401) {
+          throw new Error('Invalid API key. Please check your Grok API key.');
+        } else if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please wait a few minutes before testing again.');
+        } else if (response.status === 403) {
+          throw new Error('Access forbidden. Please check your API key permissions.');
+        } else {
+          throw new Error(errorMessage);
+        }
       }
 
       const data = await response.json();
@@ -58,6 +70,11 @@ export class GrokAI {
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
+  }
+
+  // Public method to access makeRequest for custom prompts
+  async makeCustomRequest(messages: any[], options: any = {}): Promise<GrokResponse> {
+    return this.makeRequest(messages, options);
   }
 
   async generateProductDescription(productTitle: string, category: string, features: string[]): Promise<GrokResponse> {
@@ -174,7 +191,11 @@ export class GrokAI {
 
 export async function getGrokInstance(): Promise<GrokAI | null> {
   try {
-    const response = await fetch('/api/store-settings');
+    // Determine base URL for internal requests
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/store-settings`);
     if (!response.ok) {
       throw new Error('Failed to fetch settings');
     }
@@ -182,7 +203,7 @@ export async function getGrokInstance(): Promise<GrokAI | null> {
     const settings = await response.json();
     const grokConfig = settings.ai?.grok;
     
-    if (!grokConfig?.enabled || !grokConfig?.apiKey) {
+    if (!grokConfig?.apiKey) {
       return null;
     }
     

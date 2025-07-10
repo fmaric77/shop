@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import ConditionalFooter from "@/components/ConditionalFooter";
 import DynamicHead from "@/components/DynamicHead";
+import Chatbot from "@/components/Chatbot";
 import "./globals.css";
 import "./theme.css";
 
@@ -43,10 +44,9 @@ export default function RootLayout({
                 <DynamicHead />
                 <ToastProvider>
                   <CartProvider>
-                    <div className="flex-grow">
-                      {children}
-                    </div>
+                    <div className="flex-grow">{children}</div>
                     <ConditionalFooter />
+                    <Chatbot />
                   </CartProvider>
                 </ToastProvider>
               </AuthProvider>

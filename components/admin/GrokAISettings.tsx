@@ -78,6 +78,10 @@ export default function GrokAISettings() {
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          apiKey: settings.ai.grok.apiKey,
+          model: settings.ai.grok.model || 'grok-beta'
+        }),
       });
 
       const result = await response.json();
