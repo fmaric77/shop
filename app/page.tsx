@@ -40,6 +40,10 @@ export default function Home() {
   const [justAdded, setJustAdded] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+  // AI search functionality state
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState<string>('');
   const { state: cartState, addToCart } = useCart();
   const { theme } = useTheme();
   const { content } = useContent();

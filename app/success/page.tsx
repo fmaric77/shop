@@ -1,18 +1,10 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
-export default function SuccessPage() {
-  const searchParams = useSearchParams();
-  const [sessionId, setSessionId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const session_id = searchParams.get('session_id');
-    setSessionId(session_id);
-  }, [searchParams]);
+export const dynamic = 'force-static'; // Ensures static rendering
+// Server component receives searchParams directly
+export default function SuccessPage({ searchParams }: any) {
+  const sessionId = searchParams?.session_id ?? null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
