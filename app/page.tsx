@@ -1,10 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ShoppingBag, Plus, ShoppingCart, Check } from 'lucide-react';
+import { Search, ShoppingBag, Plus, ShoppingCart, Check, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useContent } from '@/contexts/ContentContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import AuthModal from '@/components/auth/AuthModal';
+import UserMenu from '@/components/auth/UserMenu';
 
 interface Category {
   _id: string;
@@ -33,8 +38,13 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const [justAdded, setJustAdded] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const { state: cartState, addToCart } = useCart();
   const { theme } = useTheme();
+  const { content } = useContent();
+  const { user, isAuthenticated } = useAuth();
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     fetchData();
@@ -148,6 +158,66 @@ export default function Home() {
     }
   };
 
+  const handleSearchWithAI = async (query: string) => {
+    if (!query.trim()) return;
+    
+    try {
+      // Filter products based on current category selection
+      const availableProducts = products.filter((product) => {
+        if (selectedCategory && product.category._id !== selectedCategory) {
+          return false;
+        }
+        return true;
+      });
+
+      const response = await fetch('/api/ai/search-assistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: query.trim(),
+          products: availableProducts.slice(0, 10), // Send a subset of products
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.searchSuggestions) {
+          // Parse suggestions from the AI response
+          const suggestions = data.searchSuggestions.split('\n')
+            .map((s: string) => s.replace(/^\d+\.\s*/, '').trim())
+            .filter((s: string) => s.length > 0)
+            .slice(0, 5);
+          setSearchSuggestions(suggestions);
+        }
+        if (data.recommendations) {
+          setAiRecommendations(data.recommendations);
+        }
+      }
+    } catch (error) {
+      console.error('Error with AI search assistance:', error);
+    }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    if (value.length > 2) {
+      setShowSearchSuggestions(true);
+      // Debounce AI search
+      const timer = setTimeout(() => {
+        handleSearchWithAI(value);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowSearchSuggestions(false);
+      setSearchSuggestions([]);
+      setAiRecommendations('');
+    }
+  };
+
   const fetchData = async () => {
     try {
       const [productsRes, categoriesRes] = await Promise.all([
@@ -184,8 +254,16 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <ShoppingBag className="h-8 w-8" style={{ color: 'var(--color-primary)' }} />
-              <h1 className="ml-2 text-2xl font-bold theme-heading">Store</h1>
+              {content.storeLogo ? (
+                <img 
+                  src={content.storeLogo} 
+                  alt={content.storeName}
+                  className="h-8 w-auto mr-2"
+                />
+              ) : (
+                <ShoppingBag className="h-8 w-8" style={{ color: 'var(--color-primary)' }} />
+              )}
+              <h1 className="ml-2 text-2xl font-bold theme-heading">{content.storeName}</h1>
             </div>
             <div className="flex items-center gap-4">
               <Link href="/cart" className="relative">
@@ -199,17 +277,51 @@ export default function Home() {
                   </span>
                 )}
               </Link>
-              <Link 
-                href="/admin" 
-                className="text-white px-4 py-2 rounded-md hover:opacity-90 flex items-center gap-2 transition-opacity"
-                style={{ 
-                  backgroundColor: 'var(--color-primary)',
-                  borderRadius: 'var(--borderRadius)'
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                Admin Panel
-              </Link>
+              
+              {/* Authentication UI */}
+              {isAuthenticated ? (
+                <UserMenu />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setAuthModalMode('login');
+                      setShowAuthModal(true);
+                    }}
+                    className="text-gray-600 hover:text-gray-800 px-3 py-1 rounded-md transition-colors"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAuthModalMode('register');
+                      setShowAuthModal(true);
+                    }}
+                    className="text-white px-4 py-2 rounded-md hover:opacity-90 transition-opacity"
+                    style={{ 
+                      backgroundColor: 'var(--color-primary)',
+                      borderRadius: 'var(--borderRadius)'
+                    }}
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              )}
+              
+              {/* Admin Panel - only show to admins */}
+              {user?.role === 'admin' && (
+                <Link 
+                  href="/admin" 
+                  className="text-white px-4 py-2 rounded-md hover:opacity-90 flex items-center gap-2 transition-opacity"
+                  style={{ 
+                    backgroundColor: 'var(--color-secondary)',
+                    borderRadius: 'var(--borderRadius)'
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                  Admin Panel
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -227,7 +339,7 @@ export default function Home() {
               type="text"
               placeholder="Search products..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="theme-input w-full pl-10 pr-4 py-2"
             />
           </div>
@@ -279,7 +391,57 @@ export default function Home() {
 
         {/* Products List */}
         <div className={getGridClasses()}>
-          {products.map((product) => {
+          {(() => {
+            const filteredProducts = products.filter((product) => {
+              // Filter by selected category
+              if (selectedCategory && product.category._id !== selectedCategory) {
+                return false;
+              }
+              
+              // Filter by search term
+              if (searchTerm) {
+                const searchLower = searchTerm.toLowerCase();
+                return (
+                  product.title.toLowerCase().includes(searchLower) ||
+                  product.description?.toLowerCase().includes(searchLower) ||
+                  product.category.name.toLowerCase().includes(searchLower) ||
+                  product.tags.some(tag => tag.toLowerCase().includes(searchLower))
+                );
+              }
+              
+              return true;
+            });
+
+            if (filteredProducts.length === 0) {
+              return (
+                <div className="col-span-full text-center py-12">
+                  <div className="text-gray-500 mb-4">
+                    <Package className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-xl font-semibold mb-2">No products found</h3>
+                    <p>
+                      {searchTerm 
+                        ? `No products match "${searchTerm}"${selectedCategory ? ' in this category' : ''}. Try adjusting your search or category filter.`
+                        : selectedCategory 
+                          ? 'No products found in this category.'
+                          : 'No products available.'}
+                    </p>
+                  </div>
+                  {(searchTerm || selectedCategory) && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedCategory('');
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              );
+            }
+
+            return filteredProducts.map((product) => {
             const storeType = theme?.layout?.storeType || 'default';
             const cardAspectClass = getProductCardClass(storeType);
             const imageClass = getImageClass(storeType);
@@ -369,7 +531,7 @@ export default function Home() {
                         className={`${storeType === 'luxury' ? 'text-xl' : 'text-2xl'} font-bold`}
                         style={{ color: 'var(--color-primary)' }}
                       >
-                        ${product.price.toFixed(2)}
+                        {formatPrice(product.price)}
                       </span>
                       {storeType === 'food' && (
                         <span className="text-sm text-gray-500 ml-1">/unit</span>
@@ -456,9 +618,17 @@ export default function Home() {
                 </Link>
               </div>
             );
-          })}
+          });
+          })()}
         </div>
       </div>
+      
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialMode={authModalMode}
+      />
     </div>
   );
 }

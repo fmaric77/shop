@@ -1,10 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Package, Tag, ArrowLeft, Palette } from 'lucide-react';
+import { Plus, Package, Tag, ArrowLeft, Palette, Settings, Database, Brain } from 'lucide-react';
 import Link from 'next/link';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import ThemeCustomizer from '@/components/admin/ThemeCustomizer';
 import ContentEditor from '@/components/admin/ContentEditor';
+import CurrencySettings from '@/components/admin/CurrencySettings';
+import DatabaseConfig from '@/components/admin/DatabaseConfig';
+import GrokAISettings from '@/components/admin/GrokAISettings';
 
 interface Category {
   _id: string;
@@ -26,10 +30,14 @@ interface Product {
 }
 
 export default function AdminPanel() {
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'themes' | 'content'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'themes' | 'content' | 'settings' | 'database' | 'ai'>('database');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDatabaseConfigured, setIsDatabaseConfigured] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [generatingTags, setGeneratingTags] = useState(false);
+  const { formatPrice } = useCurrency();
 
   // Product form state
   const [productForm, setProductForm] = useState({
@@ -48,6 +56,19 @@ export default function AdminPanel() {
   });
 
   useEffect(() => {
+    const checkDatabaseConfig = async () => {
+      try {
+        const response = await fetch('/api/env-config');
+        if (response.ok) {
+          const data = await response.json();
+          setIsDatabaseConfigured(data.hasMongoConfig);
+        }
+      } catch (error) {
+        console.error('Error checking database config:', error);
+      }
+    };
+
+    checkDatabaseConfig();
     fetchData();
   }, []);
 
@@ -149,6 +170,78 @@ export default function AdminPanel() {
     }
   };
 
+  const handleGenerateDescription = async () => {
+    if (!productForm.title) {
+      alert('Please enter a product title first');
+      return;
+    }
+
+    setGeneratingDescription(true);
+    try {
+      const selectedCategory = categories.find(c => c._id === productForm.category);
+      const response = await fetch('/api/ai/generate-description', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productTitle: productForm.title,
+          category: selectedCategory?.name || '',
+          features: productForm.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProductForm({ ...productForm, description: data.description });
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to generate description');
+      }
+    } catch (error) {
+      console.error('Error generating description:', error);
+      alert('Failed to generate description');
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
+
+  const handleGenerateTags = async () => {
+    if (!productForm.title) {
+      alert('Please enter a product title first');
+      return;
+    }
+
+    setGeneratingTags(true);
+    try {
+      const selectedCategory = categories.find(c => c._id === productForm.category);
+      const response = await fetch('/api/ai/generate-tags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productTitle: productForm.title,
+          description: productForm.description,
+          category: selectedCategory?.name || '',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProductForm({ ...productForm, tags: data.tags.join(', ') });
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to generate tags');
+      }
+    } catch (error) {
+      console.error('Error generating tags:', error);
+      alert('Failed to generate tags');
+    } finally {
+      setGeneratingTags(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -180,6 +273,17 @@ export default function AdminPanel() {
         <div className="mb-8">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('database')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'database'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Database className="h-5 w-5 inline mr-2" />
+                Database
+              </button>
               <button
                 onClick={() => setActiveTab('products')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -223,14 +327,65 @@ export default function AdminPanel() {
               >
                 <ArrowLeft className="h-5 w-5 inline mr-2 rotate-180" />
                 Content
+              </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'settings'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Settings className="h-5 w-5 inline mr-2" />
+                Settings
+              </button>
+              <button
+                onClick={() => setActiveTab('ai')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'ai'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Brain className="h-5 w-5 inline mr-2" />
+                AI
               </button> 
             </nav>
           </div>
         </div>
 
+        {/* Database Tab */}
+        {activeTab === 'database' && (
+          <div className="space-y-6">
+            <DatabaseConfig 
+              onConfigured={() => {
+                setIsDatabaseConfigured(true);
+                setActiveTab('products');
+              }}
+            />
+          </div>
+        )}
+
         {/* Products Tab */}
         {activeTab === 'products' && (
           <div className="space-y-8">
+            {!isDatabaseConfigured && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center space-x-2">
+                  <Database className="h-5 w-5 text-yellow-600" />
+                  <div>
+                    <p className="text-yellow-800 font-medium">Database Not Configured</p>
+                    <p className="text-yellow-700 text-sm">Please configure your database connection first.</p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('database')}
+                    className="ml-auto px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
+                  >
+                    Configure Database
+                  </button>
+                </div>
+              </div>
+            )}
             {/* Add Product Form */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -300,9 +455,20 @@ export default function AdminPanel() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Description
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateDescription}
+                      disabled={generatingDescription}
+                      className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 flex items-center gap-1"
+                    >
+                      <Brain className="h-4 w-4" />
+                      {generatingDescription ? 'Generating...' : 'Generate with AI'}
+                    </button>
+                  </div>
                   <textarea
                     value={productForm.description}
                     onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
@@ -312,9 +478,20 @@ export default function AdminPanel() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tags (comma separated)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Tags (comma separated)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateTags}
+                      disabled={generatingTags}
+                      className="text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400 flex items-center gap-1"
+                    >
+                      <Brain className="h-4 w-4" />
+                      {generatingTags ? 'Generating...' : 'Generate with AI'}
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={productForm.tags}
@@ -387,7 +564,7 @@ export default function AdminPanel() {
                             {product.category.name}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            ${product.price.toFixed(2)}
+                            {formatPrice(product.price)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-wrap gap-1">
@@ -419,6 +596,23 @@ export default function AdminPanel() {
         {/* Categories Tab */}
         {activeTab === 'categories' && (
           <div className="space-y-8">
+            {!isDatabaseConfigured && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center space-x-2">
+                  <Database className="h-5 w-5 text-yellow-600" />
+                  <div>
+                    <p className="text-yellow-800 font-medium">Database Not Configured</p>
+                    <p className="text-yellow-700 text-sm">Please configure your database connection first.</p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('database')}
+                    className="ml-auto px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
+                  >
+                    Configure Database
+                  </button>
+                </div>
+              </div>
+            )}
             {/* Add Category Form */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -501,6 +695,20 @@ export default function AdminPanel() {
         {activeTab === 'content' && (
           <div className="space-y-6">
             <ContentEditor />
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <CurrencySettings />
+          </div>
+        )}
+
+        {/* AI Tab */}
+        {activeTab === 'ai' && (
+          <div className="space-y-6">
+            <GrokAISettings />
           </div>
         )}
       </div>

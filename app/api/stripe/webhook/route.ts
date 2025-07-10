@@ -4,7 +4,7 @@ import connectDB from '@/lib/mongodb';
 import Order from '@/models/Order';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2025-06-30.basil',
 });
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -39,19 +39,26 @@ export async function POST(request: NextRequest) {
       });
 
       // Create order record
-      const orderData = {
+      const orderData: any = {
         stripeSessionId: session.id,
         customerEmail: session.customer_details?.email,
         customerName: session.customer_details?.name,
         total: session.amount_total ? session.amount_total / 100 : 0,
         status: 'paid',
-        shippingAddress: session.shipping_details?.address,
+        shippingAddress: (session as any).shipping_details?.address,
         items: lineItems.data.map((item) => ({
           title: (item.price?.product as Stripe.Product)?.name || 'Unknown Product',
           price: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,
           quantity: item.quantity || 1,
         })),
+        isGuestOrder: true, // Default to guest order
       };
+
+      // Check if this order is from an authenticated user
+      if (session.metadata?.userId) {
+        orderData.userId = session.metadata.userId;
+        orderData.isGuestOrder = false;
+      }
 
       await Order.create(orderData);
       

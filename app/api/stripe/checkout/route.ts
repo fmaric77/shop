@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
 import Stripe from 'stripe';
 import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
+import User from '@/models/User';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2025-06-30.basil',
 });
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +19,20 @@ export async function POST(request: NextRequest) {
     
     if (!items || items.length === 0) {
       return NextResponse.json({ error: 'No items provided' }, { status: 400 });
+    }
+
+    // Check if user is authenticated
+    let user = null;
+    const token = request.cookies.get('auth-token')?.value;
+    
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        user = await User.findById(decoded.userId);
+      } catch (error) {
+        // Invalid token, proceed as guest
+        console.log('Invalid token, proceeding as guest checkout');
+      }
     }
 
     // Validate and fetch product details
@@ -40,17 +58,28 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    // Prepare session configuration
+    const sessionConfig: any = {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${process.env.NEXTAUTH_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/cart`,
+      success_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/cart`,
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB', 'AU', 'DE', 'FR', 'IT', 'ES'],
       },
-    });
+    };
+
+    // If user is authenticated, pre-fill their information
+    if (user) {
+      sessionConfig.customer_email = user.email;
+      sessionConfig.metadata = {
+        userId: user._id.toString(),
+      };
+    }
+
+    // Create Stripe checkout session
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return NextResponse.json({ sessionId: session.id });
   } catch (error) {

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Package, Calendar, DollarSign } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface OrderItem {
   title: string;
@@ -32,6 +34,8 @@ interface Order {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user, isAuthenticated } = useAuth();
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     fetchOrders();
@@ -39,9 +43,16 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/api/orders');
-      const data = await response.json();
-      setOrders(data);
+      const endpoint = isAuthenticated ? '/api/orders/user' : '/api/orders';
+      const response = await fetch(endpoint);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(data);
+      } else if (response.status === 401 && isAuthenticated) {
+        // Authentication failed, show message
+        setOrders([]);
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
@@ -62,7 +73,16 @@ export default function OrdersPage() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Order History</h1>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {isAuthenticated ? 'My Orders' : 'Order History'}
+              </h1>
+              {isAuthenticated && user && (
+                <p className="text-gray-600 mt-1">
+                  Orders for {user.email}
+                </p>
+              )}
+            </div>
             <Link 
               href="/"
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -75,8 +95,20 @@ export default function OrdersPage() {
         {orders.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
             <Package className="h-24 w-24 mx-auto text-gray-300 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-600 mb-2">No orders yet</h2>
-            <p className="text-gray-500 mb-6">Start shopping to see your orders here!</p>
+            <h2 className="text-xl font-semibold text-gray-600 mb-2">
+              {isAuthenticated ? 'No orders yet' : 'No orders found'}
+            </h2>
+            <p className="text-gray-500 mb-6">
+              {isAuthenticated 
+                ? 'Start shopping to see your orders here!' 
+                : 'Sign in to view your order history or start shopping!'
+              }
+            </p>
+            {!isAuthenticated && (
+              <p className="text-sm text-gray-400 mb-6">
+                This page shows all orders when not signed in (admin view).
+              </p>
+            )}
             <Link 
               href="/"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
@@ -115,7 +147,7 @@ export default function OrdersPage() {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <DollarSign className="h-4 w-4" />
-                    Total: ${order.total.toFixed(2)}
+                    Total: {formatPrice(order.total)}
                   </div>
                   <div className="text-sm text-gray-600">
                     Items: {order.items.length}
@@ -131,7 +163,7 @@ export default function OrdersPage() {
                           <span className="font-medium">{item.title}</span>
                           <span className="text-gray-600 text-sm"> × {item.quantity}</span>
                         </div>
-                        <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
                       </div>
                     ))}
                   </div>

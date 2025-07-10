@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const category = searchParams.get('category');
     
-    let query: any = {};
+    const query: Record<string, unknown> = {};
     
     if (search) {
       query.$or = [
@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
       
     return NextResponse.json(products);
   } catch (error) {
+    console.error('Error fetching products:', error);
     return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
   }
 }
@@ -60,10 +61,11 @@ export async function POST(request: NextRequest) {
     await product.save();
     await product.populate('category', 'name slug');
     return NextResponse.json(product, { status: 201 });
-  } catch (error: any) {
-    if (error.code === 11000) {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && (error as { code: number }).code === 11000) {
       return NextResponse.json({ error: 'Product already exists' }, { status: 400 });
     }
+    console.error('Error creating product:', error);
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });
   }
 }

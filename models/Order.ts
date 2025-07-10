@@ -26,6 +26,11 @@ const OrderSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false, // Optional for guest orders
+  },
   customerEmail: {
     type: String,
     required: true,
@@ -50,6 +55,10 @@ const OrderSchema = new mongoose.Schema({
     state: String,
     postal_code: String,
     country: String,
+  },
+  isGuestOrder: {
+    type: Boolean,
+    default: true, // Will be set to false if user is authenticated
   },
 }, {
   timestamps: true,

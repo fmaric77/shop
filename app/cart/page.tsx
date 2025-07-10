@@ -1,13 +1,21 @@
 'use client';
 
+import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
-import { ShoppingCart, Trash2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { ShoppingCart, Trash2, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import getStripe from '@/lib/stripe';
+import AuthModal from '@/components/auth/AuthModal';
 
 export default function CartPage() {
   const { state, removeFromCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
+  const { formatPrice } = useCurrency();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
 
   const handleCheckout = async () => {
     try {
@@ -82,7 +90,7 @@ export default function CartPage() {
                   
                   <div className="flex-1">
                     <h3 className="font-semibold">{item.productId.title}</h3>
-                    <p className="text-gray-600">${item.price.toFixed(2)}</p>
+                    <p className="text-gray-600">{formatPrice(item.price)}</p>
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -90,7 +98,7 @@ export default function CartPage() {
                   </div>
                   
                   <div className="text-right">
-                    <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
                     <button
                       onClick={() => removeFromCart(item.productId._id)}
                       className="text-red-500 hover:text-red-700 mt-1"
@@ -103,27 +111,77 @@ export default function CartPage() {
               
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-xl font-bold">Total: ${state.total.toFixed(2)}</span>
+                  <span className="text-xl font-bold">Total: {formatPrice(state.total)}</span>
                 </div>
                 
-                <div className="flex gap-4">
-                  <Link 
-                    href="/"
-                    className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors text-center"
-                  >
-                    Continue Shopping
-                  </Link>
-                  <button
-                    onClick={handleCheckout}
-                    className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Checkout with Stripe
-                  </button>
+                <div className="space-y-3">
+                  {/* User Account Status */}
+                  {isAuthenticated ? (
+                    <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-3 rounded-lg">
+                      <User className="h-4 w-4" />
+                      <span>Signed in as {user?.name}</span>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-3">
+                        Sign in for faster checkout, order tracking, and exclusive offers
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setAuthModalMode('login');
+                            setShowAuthModal(true);
+                          }}
+                          className="flex-1 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors text-sm"
+                        >
+                          Sign In
+                        </button>
+                        <button
+                          onClick={() => {
+                            setAuthModalMode('register');
+                            setShowAuthModal(true);
+                          }}
+                          className="flex-1 bg-blue-100 text-blue-700 px-4 py-2 rounded-md hover:bg-blue-200 transition-colors text-sm"
+                        >
+                          Sign Up
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Checkout Buttons */}
+                  <div className="flex gap-4">
+                    <Link 
+                      href="/"
+                      className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors text-center"
+                    >
+                      Continue Shopping
+                    </Link>
+                    <button
+                      onClick={handleCheckout}
+                      className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      {isAuthenticated ? 'Checkout' : 'Guest Checkout'}
+                    </button>
+                  </div>
+                  
+                  {!isAuthenticated && (
+                    <p className="text-xs text-gray-500 text-center">
+                      You can checkout as a guest without creating an account
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
           )}
         </div>
+        
+        {/* Authentication Modal */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          initialMode={authModalMode}
+        />
       </div>
     </div>
   );

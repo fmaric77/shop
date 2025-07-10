@@ -6,6 +6,10 @@ import Link from 'next/link';
 import { Star, Heart, Share2, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import Reviews from '@/components/Reviews';
+import ReviewForm from '@/components/ReviewForm';
 
 interface Category {
   _id: string;
@@ -76,8 +80,14 @@ export default function ProductPage() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [canReview, setCanReview] = useState(false);
+  const [reviewEligibility, setReviewEligibility] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'shipping' | 'reviews'>('description');
   const { addToCart } = useCart();
   const { theme } = useTheme();
+  const { user } = useAuth();
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -100,6 +110,59 @@ export default function ProductPage() {
       fetchProduct();
     }
   }, [slug]);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!product) return;
+      
+      try {
+        const response = await fetch(`/api/reviews?productId=${product._id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setReviews(data.reviews);
+        }
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      }
+    };
+
+    const checkReviewEligibility = async () => {
+      if (!product || !user) {
+        setCanReview(false);
+        setReviewEligibility('Login required');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/reviews/can-review?productId=${product._id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setCanReview(data.canReview);
+          setReviewEligibility(data.reason);
+        }
+      } catch (error) {
+        console.error('Error checking review eligibility:', error);
+      }
+    };
+
+    if (product) {
+      fetchReviews();
+      checkReviewEligibility();
+    }
+  }, [product, user]);
+
+  const handleReviewSubmitted = () => {
+    // Refresh reviews and check eligibility again
+    if (product) {
+      fetch(`/api/reviews?productId=${product._id}`)
+        .then(response => response.json())
+        .then(data => setReviews(data.reviews))
+        .catch(error => console.error('Error fetching reviews:', error));
+        
+      setCanReview(false);
+      setReviewEligibility('Already reviewed');
+    }
+  };
 
   const handleAddToCart = async () => {
     if (product && !isAddingToCart) {
@@ -293,7 +356,10 @@ export default function ProductPage() {
               </h1>
               
               {product.rating.count > 0 && (
-                <div className="flex items-center gap-2 mb-4">
+                <button 
+                  onClick={() => setActiveTab('reviews')}
+                  className="flex items-center gap-2 mb-4 hover:opacity-75 transition-opacity"
+                >
                   <div className="flex items-center">
                     {[...Array(5)].map((_, i) => (
                       <Star
@@ -309,18 +375,18 @@ export default function ProductPage() {
                   <span className="text-sm" style={{ color: 'var(--color-textSecondary)' }}>
                     {product.rating.average.toFixed(1)} ({product.rating.count} reviews)
                   </span>
-                </div>
+                </button>
               )}
             </div>
 
             {/* Price */}
             <div className="flex items-center gap-3">
               <span className="text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>
-                ${currentPrice.toFixed(2)}
+                {formatPrice(currentPrice)}
               </span>
               {product.comparePrice && product.comparePrice > currentPrice && (
                 <span className="text-xl line-through" style={{ color: 'var(--color-textSecondary)' }}>
-                  ${product.comparePrice.toFixed(2)}
+                  {formatPrice(product.comparePrice)}
                 </span>
               )}
             </div>
@@ -475,34 +541,147 @@ export default function ProductPage() {
         <div className="mt-16">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
-              <button className="py-2 px-1 border-b-2 border-blue-500 text-blue-600 text-sm font-medium">
+              <button 
+                onClick={() => setActiveTab('description')}
+                className={`py-2 px-1 border-b-2 text-sm font-medium ${
+                  activeTab === 'description' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
                 Description
               </button>
               {product.specifications.length > 0 && (
-                <button className="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm font-medium">
+                <button 
+                  onClick={() => setActiveTab('specifications')}
+                  className={`py-2 px-1 border-b-2 text-sm font-medium ${
+                    activeTab === 'specifications' 
+                      ? 'border-blue-500 text-blue-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
                   Specifications
                 </button>
               )}
-              <button className="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm font-medium">
+              <button 
+                onClick={() => setActiveTab('shipping')}
+                className={`py-2 px-1 border-b-2 text-sm font-medium ${
+                  activeTab === 'shipping' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
                 Shipping & Returns
+              </button>
+              <button 
+                onClick={() => setActiveTab('reviews')}
+                className={`py-2 px-1 border-b-2 text-sm font-medium ${
+                  activeTab === 'reviews' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Reviews ({reviews.length})
               </button>
             </nav>
           </div>
           
           <div className="py-6">
             {/* Description Tab Content */}
-            <div className="prose max-w-none">
-              {product.detailedDescription ? (
-                <div 
-                  dangerouslySetInnerHTML={{ __html: product.detailedDescription }}
-                  style={{ color: 'var(--color-text)' }}
+            {activeTab === 'description' && (
+              <div className="prose max-w-none">
+                {product.detailedDescription ? (
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: product.detailedDescription }}
+                    style={{ color: 'var(--color-text)' }}
+                  />
+                ) : product.description ? (
+                  <p style={{ color: 'var(--color-text)' }}>{product.description}</p>
+                ) : (
+                  <p style={{ color: 'var(--color-textSecondary)' }}>No detailed description available.</p>
+                )}
+              </div>
+            )}
+            
+            {/* Specifications Tab Content */}
+            {activeTab === 'specifications' && product.specifications.length > 0 && (
+              <div className="space-y-4">
+                {product.specifications.map((spec, index) => (
+                  <div key={index} className="flex justify-between py-2 border-b">
+                    <span className="font-medium" style={{ color: 'var(--color-text)' }}>
+                      {spec.name}
+                    </span>
+                    <span style={{ color: 'var(--color-textSecondary)' }}>
+                      {spec.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Shipping Tab Content */}
+            {activeTab === 'shipping' && (
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2" style={{ color: 'var(--color-text)' }}>
+                    Shipping Information
+                  </h4>
+                  <p style={{ color: 'var(--color-textSecondary)' }}>
+                    {storeInfo.shipping}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2" style={{ color: 'var(--color-text)' }}>
+                    Return Policy
+                  </h4>
+                  <p style={{ color: 'var(--color-textSecondary)' }}>
+                    {storeInfo.returns}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {/* Reviews Tab Content */}
+            {activeTab === 'reviews' && (
+              <div className="space-y-6">
+                {/* Review Form */}
+                {user && canReview && (
+                  <ReviewForm 
+                    productId={product._id} 
+                    onReviewSubmitted={handleReviewSubmitted}
+                  />
+                )}
+                
+                {/* Review Eligibility Message */}
+                {user && !canReview && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-yellow-800 text-sm">
+                      {reviewEligibility === 'Already reviewed' 
+                        ? 'You have already reviewed this product.' 
+                        : reviewEligibility === 'Must purchase product first'
+                        ? 'You can only review products you have purchased.'
+                        : 'Unable to review this product at this time.'}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Login Message */}
+                {!user && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-blue-800 text-sm">
+                      Please log in to write a review.
+                    </p>
+                  </div>
+                )}
+                
+                {/* Reviews List */}
+                <Reviews 
+                  reviews={reviews}
+                  averageRating={product.rating.average}
+                  totalReviews={product.rating.count}
                 />
-              ) : product.description ? (
-                <p style={{ color: 'var(--color-text)' }}>{product.description}</p>
-              ) : (
-                <p style={{ color: 'var(--color-textSecondary)' }}>No detailed description available.</p>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
