@@ -229,13 +229,28 @@ export default function Home() {
         fetch('/api/categories')
       ]);
       
-      const productsData = await productsRes.json();
-      const categoriesData = await categoriesRes.json();
+      if (productsRes.ok) {
+        const productsData = await productsRes.json();
+        // Ensure products is always an array
+        setProducts(Array.isArray(productsData) ? productsData : []);
+      } else {
+        console.error('Failed to fetch products:', productsRes.status);
+        setProducts([]);
+      }
       
-      setProducts(productsData);
-      setCategories(categoriesData);
+      if (categoriesRes.ok) {
+        const categoriesData = await categoriesRes.json();
+        // Ensure categories is always an array
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      } else {
+        console.error('Failed to fetch categories:', categoriesRes.status);
+        setCategories([]);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
+      // Set empty arrays on error
+      setProducts([]);
+      setCategories([]);
     } finally {
       setLoading(false);
     }

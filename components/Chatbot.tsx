@@ -5,6 +5,7 @@ import { MessageCircle, Send, X, Bot, User, Loader } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Link from 'next/link';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface Message {
   id: string;
@@ -32,6 +33,7 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -136,7 +138,11 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105"
+          className="text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105 hover:opacity-90"
+          style={{
+            backgroundColor: 'var(--color-primary)',
+            borderRadius: 'var(--border-radius-full)'
+          }}
         >
           <MessageCircle className="h-6 w-6" />
         </button>
@@ -144,16 +150,28 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="bg-white rounded-lg shadow-2xl w-80 h-96 flex flex-col border border-gray-200">
+        <div 
+          className="theme-surface rounded-lg shadow-2xl w-80 h-96 flex flex-col border"
+          style={{ 
+            borderColor: 'var(--color-border)',
+            borderRadius: 'var(--border-radius-large)'
+          }}
+        >
           {/* Header */}
-          <div className="bg-blue-600 text-white p-4 rounded-t-lg flex items-center justify-between">
+          <div 
+            className="text-white p-4 rounded-t-lg flex items-center justify-between"
+            style={{ 
+              backgroundColor: 'var(--color-primary)',
+              borderRadius: 'var(--border-radius-large) var(--border-radius-large) 0 0'
+            }}
+          >
             <div className="flex items-center space-x-2">
               <Bot className="h-5 w-5" />
               <span className="font-medium">Shopping Assistant</span>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-blue-100 hover:text-white transition-colors"
+              className="text-white opacity-80 hover:opacity-100 transition-opacity"
             >
               <X className="h-5 w-5" />
             </button>
@@ -163,11 +181,18 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
-                  message.isUser 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
+                <div 
+                  className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg`}
+                  style={{
+                    backgroundColor: message.isUser 
+                      ? 'var(--color-primary)' 
+                      : 'var(--color-surface)',
+                    color: message.isUser 
+                      ? 'white' 
+                      : 'var(--color-text)',
+                    borderRadius: 'var(--border-radius-medium)'
+                  }}
+                >
                   <div className="flex items-start space-x-2">
                     {!message.isUser && <Bot className="h-4 w-4 mt-0.5 flex-shrink-0" />}
                     {message.isUser && <User className="h-4 w-4 mt-0.5 flex-shrink-0" />}
@@ -184,7 +209,10 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
                             text = text.replace(regex, `[${p.title}](${url})`);
                           });
                           return (
-                            <div className="prose prose-sm whitespace-pre-wrap text-gray-800">
+                            <div 
+                              className="prose prose-sm whitespace-pre-wrap"
+                              style={{ color: 'var(--color-text)' }}
+                            >
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {text}
                               </ReactMarkdown>
@@ -193,7 +221,14 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
                         })()
                       )}
                       
-                      <p className="text-xs opacity-70 mt-1">{formatTime(message.timestamp)}</p>
+                      <p 
+                        className="text-xs opacity-70 mt-1"
+                        style={{ 
+                          color: message.isUser ? 'rgba(255,255,255,0.7)' : 'var(--color-textSecondary)'
+                        }}
+                      >
+                        {formatTime(message.timestamp)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -202,7 +237,14 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
             
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-100 text-gray-800 px-3 py-2 rounded-lg flex items-center space-x-2">
+                <div 
+                  className="px-3 py-2 rounded-lg flex items-center space-x-2"
+                  style={{
+                    backgroundColor: 'var(--color-surface)',
+                    color: 'var(--color-text)',
+                    borderRadius: 'var(--border-radius-medium)'
+                  }}
+                >
                   <Bot className="h-4 w-4" />
                   <Loader className="h-4 w-4 animate-spin" />
                   <span className="text-sm">Thinking...</span>
@@ -214,7 +256,10 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
           </div>
 
           {/* Input */}
-          <div className="border-t border-gray-200 p-4">
+          <div 
+            className="border-t p-4"
+            style={{ borderColor: 'var(--color-border)' }}
+          >
             <div className="flex space-x-2">
               <input
                 type="text"
@@ -222,13 +267,24 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask about products..."
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 theme-input"
+                style={{
+                  borderColor: 'var(--color-border)',
+                  backgroundColor: 'var(--color-background)',
+                  color: 'var(--color-text)',
+                  borderRadius: 'var(--border-radius-medium)',
+                  '--tw-ring-color': 'var(--color-primary)'
+                }}
                 disabled={isLoading}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!inputText.trim() || isLoading}
-                className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="text-white p-2 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                style={{
+                  backgroundColor: 'var(--color-primary)',
+                  borderRadius: 'var(--border-radius-medium)'
+                }}
               >
                 <Send className="h-4 w-4" />
               </button>
