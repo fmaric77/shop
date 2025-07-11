@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Package, Tag, ArrowLeft, Palette, Settings, Database, Brain } from 'lucide-react';
+import { Plus, Package, Tag, ArrowLeft, Palette, Settings, Database, Brain, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import ThemeCustomizer from '@/components/admin/ThemeCustomizer';
 import ContentEditor from '@/components/admin/ContentEditor';
 import CurrencySettings from '@/components/admin/CurrencySettings';
 import DatabaseConfig from '@/components/admin/DatabaseConfig';
-import GrokAISettings from '@/components/admin/GrokAISettings';
+import AISettings from '@/components/admin/GrokAISettings';
+import PaymentSettings from '@/components/admin/PaymentSettings';
 
 interface Category {
   _id: string;
@@ -30,24 +31,34 @@ interface Product {
 }
 
 export default function AdminPanel() {
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'themes' | 'content' | 'settings' | 'database' | 'ai'>('database');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'themes' | 'content' | 'settings' | 'payment' | 'database' | 'ai'>('payment');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDatabaseConfigured, setIsDatabaseConfigured] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [generatingTags, setGeneratingTags] = useState(false);
+  const [creatingTemplate, setCreatingTemplate] = useState(false);
   const { formatPrice } = useCurrency();
 
   // Product form state
   const [productForm, setProductForm] = useState({
     title: '',
+    aiPrompt: '',
     description: '',
+    detailedDescription: '',
     price: '',
     category: '',
     tags: '',
-    image: '',
+    imagesCSV: '', // New comma-separated image URLs
   });
+  // Track editing mode
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+
+  const resetProductForm = () => {
+    setProductForm({ title: '', aiPrompt: '', description: '', detailedDescription: '', price: '', category: '', tags: '', imagesCSV: '' });
+    setEditingProductId(null);
+  };
 
   // Category form state
   const [categoryForm, setCategoryForm] = useState({
@@ -101,37 +112,50 @@ export default function AdminPanel() {
 
     try {
       const tagsArray = productForm.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
-      
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...productForm,
-          tags: tagsArray,
-        }),
-      });
+      const imageUrls = productForm.imagesCSV.split(',').map(url => url.trim()).filter(Boolean);
+      let response;
+      const payload: any = {
+        title: productForm.title,
+        description: productForm.description,
+        detailedDescription: productForm.detailedDescription,
+        price: productForm.price,
+        category: productForm.category,
+        tags: tagsArray,
+        images: imageUrls,
+      };
+      if (editingProductId) {
+        // Update existing product
+        response = await fetch(`/api/products/${editingProductId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // Create new product
+        response = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
 
       if (response.ok) {
-        const newProduct = await response.json();
-        setProducts([newProduct, ...products]);
-        setProductForm({
-          title: '',
-          description: '',
-          price: '',
-          category: '',
-          tags: '',
-          image: '',
-        });
-        alert('Product created successfully!');
+        const saved = await response.json();
+        if (editingProductId) {
+          setProducts(products.map(p => p._id === editingProductId ? saved : p));
+          alert('Product updated successfully!');
+        } else {
+          setProducts([saved, ...products]);
+          alert('Product created successfully!');
+        }
+        resetProductForm();
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to create product');
+        alert(error.error || (editingProductId ? 'Failed to update product' : 'Failed to create product'));
       }
     } catch (error) {
-      console.error('Error creating product:', error);
-      alert('Failed to create product');
+      console.error('Error creating/updating product:', error);
+      alert('Failed to save product');
     }
   };
 
@@ -242,6 +266,90 @@ export default function AdminPanel() {
     }
   };
 
+  // Handler to create a full product template via AI
+  const handleCreateProductTemplate = async () => {
+    setCreatingTemplate(true);
+    try {
+      const response = await fetch('/api/ai/create-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initialPrompt: productForm.aiPrompt }),
+      });
+      const data = await response.json();
+      if (response.ok && data.product) {
+        const { title, category, price, description, detailedDescription, tags, image } = data.product;
+        // Map category name to ID if exists
+        // Try exact match by name (case-insensitive)
+        let categoryObj = categories.find(
+          c => c.name.toLowerCase() === (category || '').toLowerCase()
+        );
+        // If not found, try matching slugified name
+        if (!categoryObj) {
+          const slugify = (str: string) =>
+            str
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)/g, '');
+          const targetSlug = slugify(category || '');
+          categoryObj = categories.find(c => c.slug === targetSlug);
+        }
+        // If still not found, default to first visible category
+        if (!categoryObj && categories.length > 0) {
+          categoryObj = categories[0];
+        }
+        setProductForm({
+          title: title || '',
+          aiPrompt: productForm.aiPrompt,
+          description: description || '',
+          detailedDescription: detailedDescription || '',
+          price: price ? price.toString() : '',
+          category: categoryObj?._id || '',
+          tags: Array.isArray(tags) ? tags.join(', ') : (tags || ''),
+          imagesCSV: Array.isArray(image) ? image.join(', ') : image || '',
+        });
+      } else {
+        alert(data.error || 'Failed to generate product template');
+      }
+    } catch (err) {
+      console.error('Error generating product template:', err);
+      alert('Error generating product template');
+    } finally {
+      setCreatingTemplate(false);
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    try {
+      const response = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        setProducts(products.filter(p => p._id !== id));
+      } else {
+        const err = await response.json();
+        alert(err.error || 'Failed to delete product');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('Failed to delete product');
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    try {
+      const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        setCategories(categories.filter(c => c._id !== id));
+      } else {
+        const err = await response.json();
+        alert(err.error || 'Failed to delete category');
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      alert('Failed to delete category');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -340,6 +448,17 @@ export default function AdminPanel() {
                 Settings
               </button>
               <button
+                onClick={() => setActiveTab('payment')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'payment'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <CreditCard className="h-5 w-5 inline mr-2" />
+                Payment
+              </button>
+              <button
                 onClick={() => setActiveTab('ai')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'ai'
@@ -391,6 +510,15 @@ export default function AdminPanel() {
               <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
                 <Plus className="h-5 w-5 mr-2" />
                 Add New Product
+                <button
+                  type="button"
+                  onClick={handleCreateProductTemplate}
+                  disabled={creatingTemplate}
+                  className="ml-4 px-2 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 disabled:bg-gray-300 flex items-center gap-1"
+                >
+                  <Brain className="h-4 w-4" />
+                  {creatingTemplate ? 'Generating...' : 'Create with AI'}
+                </button>
               </h2>
               
               <form onSubmit={handleProductSubmit} className="space-y-4">
@@ -476,6 +604,17 @@ export default function AdminPanel() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
+
+                {/* Detailed Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Detailed Description</label>
+                  <textarea
+                    rows={4}
+                    value={productForm.detailedDescription}
+                    onChange={(e) => setProductForm({ ...productForm, detailedDescription: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
                 
                 <div>
                   <div className="flex items-center justify-between mb-1">
@@ -497,6 +636,32 @@ export default function AdminPanel() {
                     value={productForm.tags}
                     onChange={(e) => setProductForm({ ...productForm, tags: e.target.value })}
                     placeholder="electronics, gadget, smartphone"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    AI Prompt (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={productForm.aiPrompt}
+                    onChange={(e) => setProductForm({ ...productForm, aiPrompt: e.target.value })}
+                    placeholder="Provide context or instructions for AI"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Images (comma-separated URLs)
+                  </label>
+                  <textarea
+                    value={productForm.imagesCSV}
+                    onChange={(e) => setProductForm({ ...productForm, imagesCSV: e.target.value })}
+                    rows={2}
+                    placeholder="https://.../1.jpg, https://.../2.jpg"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -535,6 +700,9 @@ export default function AdminPanel() {
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Tags
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
                         </th>
                       </tr>
                     </thead>
@@ -582,6 +750,34 @@ export default function AdminPanel() {
                                 </span>
                               )}
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => handleDeleteProduct(product._id)}
+                              className="text-red-600 hover:text-red-800 mr-4"
+                            >
+                              Delete
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingProductId(product._id);
+                                setProductForm({
+                                  title: product.title,
+                                  aiPrompt: '',
+                                  description: product.description || '',
+                                  detailedDescription: product.detailedDescription || '',
+                                  price: product.price.toString(),
+                                  category: product.category._id,
+                                  tags: product.tags.join(', '),
+                                  imagesCSV: product.images
+                                    ? product.images.map(img => img.url).join(', ')
+                                    : (product.image ? product.image : ''),
+                                });
+                              }}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              Edit
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -675,6 +871,12 @@ export default function AdminPanel() {
                         <p className="text-sm text-gray-600">{category.description}</p>
                       )}
                       <p className="text-xs text-gray-500 mt-2">Slug: {category.slug}</p>
+                      <button
+                        onClick={() => handleDeleteCategory(category._id)}
+                        className="mt-3 text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Delete Category
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -705,10 +907,16 @@ export default function AdminPanel() {
           </div>
         )}
 
+        {/* Payment Tab */}
+        {activeTab === 'payment' && (
+          <div className="space-y-6">
+            <PaymentSettings />
+          </div>
+        )}
         {/* AI Tab */}
         {activeTab === 'ai' && (
           <div className="space-y-6">
-            <GrokAISettings />
+            <AISettings />
           </div>
         )}
       </div>

@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Reviews from '@/components/Reviews';
 import ReviewForm from '@/components/ReviewForm';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Category {
   _id: string;
@@ -393,9 +395,11 @@ export default function ProductPage() {
 
             {/* Short Description */}
             {product.description && (
-              <p className="text-lg" style={{ color: 'var(--color-textSecondary)' }}>
-                {product.description}
-              </p>
+              <div className="prose text-lg max-w-none" style={{ color: 'var(--color-textSecondary)' }}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {product.description}
+                </ReactMarkdown>
+              </div>
             )}
 
             {/* Variants */}
@@ -591,10 +595,15 @@ export default function ProductPage() {
             {activeTab === 'description' && (
               <div className="prose max-w-none">
                 {product.detailedDescription ? (
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: product.detailedDescription }}
-                    style={{ color: 'var(--color-text)' }}
-                  />
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ node, ...props }) => <p style={{ color: 'var(--color-text)' }} {...props} />,
+                      li: ({ node, ...props }) => <li style={{ color: 'var(--color-text)' }} {...props} />
+                    }}
+                  >
+                    {product.detailedDescription}
+                  </ReactMarkdown>
                 ) : product.description ? (
                   <p style={{ color: 'var(--color-text)' }}>{product.description}</p>
                 ) : (

@@ -50,7 +50,7 @@ const StoreSettingsSchema = new mongoose.Schema({
   ai: {
     provider: {
       type: String,
-      enum: ['none', 'grok'],
+      enum: ['none', 'grok', 'azureOpenAI'],
       default: 'none',
     },
     grok: {
@@ -84,6 +84,61 @@ const StoreSettingsSchema = new mongoose.Schema({
           default: true,
         },
       },
+    },
+    azureOpenAI: {
+      apiKey: {
+        type: String,
+        default: '',
+      },
+      endpoint: {
+        type: String,
+        default: '',
+      },
+      apiVersion: {
+        type: String,
+        default: '2024-12-01-preview',
+      },
+      model: {
+        type: String,
+        default: 'gpt-4o',
+      },
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      features: {
+        productRecommendations: {
+          type: Boolean,
+          default: true,
+        },
+        productDescriptions: {
+          type: Boolean,
+          default: true,
+        },
+        customerSupport: {
+          type: Boolean,
+          default: true,
+        },
+        searchAssistant: {
+          type: Boolean,
+          default: true,
+        },
+        imageAnalysis: {
+          type: Boolean,
+          default: true,
+        },
+      },
+    },
+  },
+  // Stripe API keys for payment configuration
+  stripe: {
+    publishableKey: {
+      type: String,
+      default: '',
+    },
+    secretKey: {
+      type: String,
+      default: '',
     },
   },
   // Make this a singleton - only one settings document

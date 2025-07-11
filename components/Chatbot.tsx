@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, X, Bot, User, Loader } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import Link from 'next/link';
 
 interface Message {
   id: string;
@@ -85,12 +88,13 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
       if (response.ok) {
         const data = await response.json();
         
+        // Only include products field if there are recommendations
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
           text: data.response || "I'm sorry, I couldn't process your request right now.",
           isUser: false,
           timestamp: new Date(),
-          products: data.recommendedProducts || [],
+          ...(data.recommendedProducts && data.recommendedProducts.length > 0 ? { products: data.recommendedProducts } : {}),
         };
 
         setMessages(prev => [...prev, aiMessage]);
@@ -168,19 +172,25 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
                     {!message.isUser && <Bot className="h-4 w-4 mt-0.5 flex-shrink-0" />}
                     {message.isUser && <User className="h-4 w-4 mt-0.5 flex-shrink-0" />}
                     <div className="flex-1">
-                      <p className="text-sm whitespace-pre-wrap">{message.text}</p>
-                      
-                      {/* Show recommended products if any */}
-                      {message.products && message.products.length > 0 && (
-                        <div className="mt-2 space-y-2">
-                          <p className="text-xs font-medium">Recommended products:</p>
-                          {message.products.slice(0, 3).map((product) => (
-                            <div key={product._id} className="bg-white p-2 rounded border text-gray-800">
-                              <p className="text-xs font-medium">{product.title}</p>
-                              <p className="text-xs text-gray-600">${product.price}</p>
+                      {message.isUser ? (
+                        <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                      ) : (
+                        (() => {
+                          // Replace product titles in AI text with links
+                          let text = message.text;
+                          products.forEach(p => {
+                            const regex = new RegExp(`\\b${p.title}\\b`, 'g');
+                            const url = `/product/${p.slug}`;
+                            text = text.replace(regex, `[${p.title}](${url})`);
+                          });
+                          return (
+                            <div className="prose prose-sm whitespace-pre-wrap text-gray-800">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {text}
+                              </ReactMarkdown>
                             </div>
-                          ))}
-                        </div>
+                          );
+                        })()
                       )}
                       
                       <p className="text-xs opacity-70 mt-1">{formatTime(message.timestamp)}</p>

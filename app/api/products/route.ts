@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
     const body = await request.json();
-    const { title, description, price, category, tags, image } = body;
+    const { title, description, detailedDescription, price, category, tags, images } = body;
 
     if (!title || !price || !category) {
       return NextResponse.json({ 
@@ -48,13 +48,20 @@ export async function POST(request: NextRequest) {
 
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     
+    // Format images array of URLs into objects
+    const formattedImages = Array.isArray(images)
+      ? images.map((url: string, idx: number) => ({ url, alt: '', order: idx }))
+      : [];
     const product = new Product({
       title,
       description,
+      detailedDescription,
       price: parseFloat(price),
       category,
       tags: tags || [],
-      image,
+      images: formattedImages,
+      // For legacy support, set first image as `image` field
+      image: formattedImages[0]?.url || '',
       slug,
     });
 

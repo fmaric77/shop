@@ -4,18 +4,20 @@ import Stripe from 'stripe';
 import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
 import User from '@/models/User';
+import StoreSettings from '@/models/StoreSettings';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key';
 
 export async function POST(request: NextRequest) {
   try {
-    // Ensure Stripe secret key is defined
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return NextResponse.json({ error: 'STRIPE_SECRET_KEY environment variable is required' }, { status: 500 });
-    }
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-06-30.basil' });
-    
+    // Load Stripe secret key from StoreSettings
     await connectDB();
+    const settings = await StoreSettings.findById('store-settings');
+    const secretKey = settings?.stripe?.secretKey;
+    if (!secretKey) {
+      return NextResponse.json({ error: 'Stripe secret key not configured in store settings' }, { status: 500 });
+    }
+    const stripe = new Stripe(secretKey, { apiVersion: '2025-06-30.basil' });
     
     const { items } = await request.json();
     

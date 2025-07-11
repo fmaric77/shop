@@ -16,6 +16,10 @@ interface StoreSettings {
   currency: CurrencySettings;
   timezone: string;
   dateFormat: string;
+  stripe: {
+    publishableKey: string;
+    secretKey: string;
+  };
 }
 
 export default function CurrencySettingsEditor() {
@@ -32,6 +36,10 @@ export default function CurrencySettingsEditor() {
       const response = await fetch('/api/store-settings');
       if (response.ok) {
         const data = await response.json();
+        // Ensure stripe settings exist
+        if (!data.stripe) {
+          data.stripe = { publishableKey: '', secretKey: '' };
+        }
         setSettings(data);
       }
     } catch (error) {
@@ -66,6 +74,17 @@ export default function CurrencySettingsEditor() {
         },
       });
     }
+  };
+
+  const handleStripeChange = (field: 'publishableKey' | 'secretKey', value: string) => {
+    if (!settings) return;
+    setSettings({
+      ...settings,
+      stripe: {
+        ...settings.stripe,
+        [field]: value,
+      }
+    });
   };
 
   const handleSave = async () => {
@@ -235,6 +254,36 @@ export default function CurrencySettingsEditor() {
           >
             {saving ? 'Saving...' : 'Save Settings'}
           </button>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-xl font-semibold mb-4">Stripe Settings</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Publishable Key
+            </label>
+            <input
+              type="text"
+              value={settings.stripe.publishableKey}
+              onChange={(e) => handleStripeChange('publishableKey', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="pk_live_..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Secret Key
+            </label>
+            <input
+              type="password"
+              value={settings.stripe.secretKey}
+              onChange={(e) => handleStripeChange('secretKey', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="sk_live_..."
+            />
+          </div>
         </div>
       </div>
     </div>
