@@ -4,10 +4,11 @@ import Product from '@/models/Product';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const params = await context.params;
     const { id } = params;
     const deleted = await Product.findByIdAndDelete(id);
     if (!deleted) {
@@ -22,10 +23,11 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const params = await context.params;
     const { id } = params;
     const rawData = await request.json();
     // Handle multiple image URLs

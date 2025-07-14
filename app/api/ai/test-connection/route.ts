@@ -5,13 +5,13 @@ import { getGrokInstance, GrokAI } from '@/lib/grok';
 export async function POST(request: NextRequest) {
   try {
     // Allow passing AI provider configuration in request body for testing
-    let body: any = {};
+    let body: { provider?: string; [key: string]: any } = {};
     try {
       const text = await request.text();
       if (text) {
         body = JSON.parse(text);
       }
-    } catch (parseError) {
+    } catch {
       // If no body or invalid JSON, use empty object
       console.log('No valid JSON body provided, using stored settings');
     }

@@ -29,24 +29,24 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-md">
+    <div className="min-h-screen bg-[var(--color-background)]">
+      <div className="theme-container py-8">
+        <div className="theme-surface shadow-md">
           {/* Header */}
-          <div className="border-b border-gray-200 px-6 py-4">
-            <h1 className="text-2xl font-bold text-gray-900">My Account</h1>
+          <div className="border-b border-[var(--color-border)] px-6 py-4">
+            <h1 className="text-2xl font-bold text-[var(--color-text)]">My Account</h1>
           </div>
 
           {/* Account Info */}
           <div className="p-6">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-[var(--color-primary)] rounded-full flex items-center justify-center">
                 <User className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">{user.name}</h2>
-                <p className="text-gray-600">{user.email}</p>
-                <p className="text-sm text-gray-500">
+                <h2 className="text-xl font-semibold text-[var(--color-text)]">{user.name}</h2>
+                <p className="text-[var(--color-textSecondary)]">{user.email}</p>
+                <p className="text-sm text-[var(--color-textSecondary)]">
                   Member since {new Date(user.createdAt).toLocaleDateString()}
                 </p>
               </div>
@@ -54,20 +54,20 @@ export default function AccountPage() {
 
             {/* Account Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="theme-surface p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Mail className="h-5 w-5 text-gray-600" />
-                  <h3 className="font-medium text-gray-900">Email</h3>
+                  <Mail className="h-5 w-5 text-[var(--color-textSecondary)]" />
+                  <h3 className="font-medium text-[var(--color-text)]">Email</h3>
                 </div>
-                <p className="text-gray-600">{user.email}</p>
+                <p className="text-[var(--color-textSecondary)]">{user.email}</p>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="theme-surface p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-5 w-5 text-gray-600" />
-                  <h3 className="font-medium text-gray-900">Member Since</h3>
+                  <Calendar className="h-5 w-5 text-[var(--color-textSecondary)]" />
+                  <h3 className="font-medium text-[var(--color-text)]">Member Since</h3>
                 </div>
-                <p className="text-gray-600">
+                <p className="text-[var(--color-textSecondary)]">
                   {new Date(user.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
@@ -78,39 +78,39 @@ export default function AccountPage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+            <div className="border-t border-[var(--color-border)] pt-6">
+              <h3 className="text-lg font-medium text-[var(--color-text)] mb-4">Quick Actions</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Link
                   href="/orders"
-                  className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-3 p-4 border border-[var(--color-border)] rounded-md hover:bg-[var(--color-surface)] transition-colors"
                 >
                   <ShoppingBag className="h-5 w-5 text-blue-600" />
                   <div>
-                    <div className="font-medium text-gray-900">Order History</div>
-                    <div className="text-sm text-gray-600">View your past orders</div>
+                    <div className="font-medium text-[var(--color-text)]">Order History</div>
+                    <div className="text-sm text-[var(--color-textSecondary)]">View your past orders</div>
                   </div>
                 </Link>
 
                 <Link
                   href="/"
-                  className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-3 p-4 border border-[var(--color-border)] rounded-md hover:bg-[var(--color-surface)] transition-colors"
                 >
                   <ShoppingBag className="h-5 w-5 text-green-600" />
                   <div>
-                    <div className="font-medium text-gray-900">Continue Shopping</div>
-                    <div className="text-sm text-gray-600">Browse our products</div>
+                    <div className="font-medium text-[var(--color-text)]">Continue Shopping</div>
+                    <div className="text-sm text-[var(--color-textSecondary)]">Browse our products</div>
                   </div>
                 </Link>
 
                 <Link
                   href="/cart"
-                  className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-3 p-4 border border-[var(--color-border)] rounded-md hover:bg-[var(--color-surface)] transition-colors"
                 >
                   <ShoppingBag className="h-5 w-5 text-orange-600" />
                   <div>
-                    <div className="font-medium text-gray-900">Shopping Cart</div>
-                    <div className="text-sm text-gray-600">Complete your purchase</div>
+                    <div className="font-medium text-[var(--color-text)]">Shopping Cart</div>
+                    <div className="text-sm text-[var(--color-textSecondary)]">Complete your purchase</div>
                   </div>
                 </Link>
               </div>

@@ -68,15 +68,15 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="theme-surface shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-[var(--color-border)]">
+          <h2 className="text-2xl font-bold text-[var(--color-text)]">
             {mode === 'login' ? 'Sign In' : 'Create Account'}
           </h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-[var(--color-textSecondary)] hover:text-[var(--color-text)] transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -101,7 +101,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border rounded-md border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                   placeholder="Enter your full name"
                   required
                 />
@@ -119,7 +119,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border rounded-md border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                 placeholder="Enter your email"
                 required
               />
@@ -136,7 +136,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-12 py-3 border rounded-md border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
                 placeholder={mode === 'register' ? 'Create a password (min 6 characters)' : 'Enter your password'}
                 required
                 minLength={mode === 'register' ? 6 : undefined}
@@ -163,7 +163,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full theme-button-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            data-style="rounded"
           >
             {loading ? (
               <div className="flex items-center justify-center">
@@ -182,7 +183,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
             <button
               onClick={switchMode}
-              className="ml-1 text-blue-600 hover:text-blue-800 font-medium"
+              className="ml-1 text-[var(--color-primary)] hover:filter hover:brightness-90 font-medium"
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}
             </button>

@@ -118,14 +118,14 @@ export default function DatabaseConfig({ onConfigured }: DatabaseConfigProps) {
 
   if (isConfigured) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="theme-surface p-6 rounded-lg shadow">
         <div className="flex items-center space-x-3 mb-4">
           <div className="p-2 bg-green-100 rounded-full">
             <Database className="h-6 w-6 text-green-600" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Database Configuration</h2>
-            <p className="text-sm text-gray-600">Your MongoDB database is configured and ready</p>
+            <h2 className="text-xl font-semibold text-[var(--color-text)]">Database Configuration</h2>
+            <p className="text-sm text-[var(--color-textSecondary)]">Your MongoDB database is configured and ready</p>
           </div>
         </div>
 
@@ -145,20 +145,20 @@ export default function DatabaseConfig({ onConfigured }: DatabaseConfigProps) {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
+    <div className="theme-surface p-6 rounded-lg shadow">
       <div className="flex items-center space-x-3 mb-6">
         <div className="p-2 bg-blue-100 rounded-full">
           <Database className="h-6 w-6 text-blue-600" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Database Configuration</h2>
-          <p className="text-sm text-gray-600">Set up your MongoDB database connection</p>
+          <h2 className="text-xl font-semibold text-[var(--color-text)]">Database Configuration</h2>
+          <p className="text-sm text-[var(--color-textSecondary)]">Set up your MongoDB database connection</p>
         </div>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
             MongoDB Connection URI
           </label>
           <input
@@ -168,7 +168,7 @@ export default function DatabaseConfig({ onConfigured }: DatabaseConfigProps) {
             placeholder="mongodb://localhost:27017/mystore or mongodb+srv://username:password@cluster.mongodb.net/mystore"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-[var(--color-textSecondary)]">
             Enter your MongoDB connection string. This can be a local MongoDB instance or a cloud service like MongoDB Atlas.
           </p>
         </div>

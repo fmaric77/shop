@@ -267,8 +267,8 @@ export default function AISettings() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">AI Configuration</h2>
+      <div className="theme-surface p-6 rounded-lg shadow">
+        <h2 className="text-xl font-semibold mb-4 text-[var(--color-text)]">AI Configuration</h2>
         
         <div className="space-y-4">
           {/* Provider Selection */}
@@ -279,7 +279,7 @@ export default function AISettings() {
             <select
               value={settings.ai?.provider || 'grok'}
               onChange={(e) => handleAISettingChange('provider', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               <option value="grok">Grok AI (xAI)</option>
               <option value="azureOpenAI">Azure OpenAI</option>
@@ -297,15 +297,15 @@ export default function AISettings() {
                     onChange={(e) => handleAISettingChange('grok.enabled', e.target.checked)}
                     className="mr-2"
                   />
-                  <span className="text-sm font-medium text-gray-700">Enable Grok AI</span>
+                  <span className="text-sm font-medium text-[var(--color-text)]">Enable Grok AI</span>
                 </label>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-[var(--color-textSecondary)] mt-1">
                   Enable AI-powered features like product descriptions, search assistance, and recommendations
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
                   Grok API Key
                 </label>
                 <div className="relative">
@@ -313,13 +313,13 @@ export default function AISettings() {
                     type={showApiKey ? 'text' : 'password'}
                     value={settings.ai?.grok?.apiKey || ''}
                     onChange={(e) => handleAISettingChange('grok.apiKey', e.target.value)}
-                    className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 pr-20 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     placeholder="Enter your Grok API key"
                   />
                   <button
                     type="button"
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-12 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-12 top-1/2 transform -translate-y-1/2 text-[var(--color-textSecondary)] hover:text-[var(--color-text)]"
                   >
                     {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -327,25 +327,25 @@ export default function AISettings() {
                     type="button"
                     onClick={handleTestConnection}
                     disabled={testing || !settings.ai?.grok?.apiKey}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 disabled:text-gray-300"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-[var(--color-textSecondary)] hover:text-[var(--color-text)] disabled:opacity-50"
                     title="Test connection"
                   >
                     <TestTube className="h-4 w-4" />
                   </button>
                 </div>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-[var(--color-textSecondary)] mt-1">
                   Get your API key from <a href="https://x.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">x.ai</a>
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
                   Model
                 </label>
                 <select
                   value={settings.ai?.grok?.model || 'grok-beta'}
                   onChange={(e) => handleAISettingChange('grok.model', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="grok-beta">Grok Beta</option>
                   <option value="grok-vision-beta">Grok Vision Beta</option>
@@ -365,15 +365,15 @@ export default function AISettings() {
                     onChange={(e) => handleAISettingChange('azureOpenAI.enabled', e.target.checked)}
                     className="mr-2"
                   />
-                  <span className="text-sm font-medium text-gray-700">Enable Azure OpenAI</span>
+                  <span className="text-sm font-medium text-[var(--color-text)]">Enable Azure OpenAI</span>
                 </label>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-[var(--color-textSecondary)] mt-1">
                   Enable AI-powered features using Azure OpenAI GPT-4o with vision capabilities
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
                   Azure OpenAI API Key
                 </label>
                 <div className="relative">
@@ -381,13 +381,13 @@ export default function AISettings() {
                     type={showAzureApiKey ? 'text' : 'password'}
                     value={settings.ai?.azureOpenAI?.apiKey || ''}
                     onChange={(e) => handleAISettingChange('azureOpenAI.apiKey', e.target.value)}
-                    className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 pr-20 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     placeholder="Enter your Azure OpenAI API key"
                   />
                   <button
                     type="button"
                     onClick={() => setShowAzureApiKey(!showAzureApiKey)}
-                    className="absolute right-12 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-12 top-1/2 transform -translate-y-1/2 text-[var(--color-textSecondary)] hover:text-[var(--color-text)]"
                   >
                     {showAzureApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -395,38 +395,38 @@ export default function AISettings() {
                     type="button"
                     onClick={handleTestConnection}
                     disabled={testing || !settings.ai?.azureOpenAI?.apiKey}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 disabled:text-gray-300"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-[var(--color-textSecondary)] hover:text-[var(--color-text)] disabled:opacity-50"
                     title="Test connection"
                   >
                     <TestTube className="h-4 w-4" />
                   </button>
                 </div>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-[var(--color-textSecondary)] mt-1">
                   Get your API key from the Azure Portal
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
                   Azure Endpoint
                 </label>
                 <input
                   type="text"
                   value={settings.ai?.azureOpenAI?.endpoint || ''}
                   onChange={(e) => handleAISettingChange('azureOpenAI.endpoint', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   placeholder="https://your-resource.openai.azure.com/"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
                   API Version
                 </label>
                 <select
                   value={settings.ai?.azureOpenAI?.apiVersion || '2024-12-01-preview'}
                   onChange={(e) => handleAISettingChange('azureOpenAI.apiVersion', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   <option value="2024-12-01-preview">2024-12-01-preview</option>
                   <option value="2024-10-21">2024-10-21</option>
@@ -435,17 +435,17 @@ export default function AISettings() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
                   Model Deployment Name
                 </label>
                 <input
                   type="text"
                   value={settings.ai?.azureOpenAI?.model || ''}
                   onChange={(e) => handleAISettingChange('azureOpenAI.model', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   placeholder="gpt-4o"
                 />
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-[var(--color-textSecondary)] mt-1">
                   Enter the deployment name of your GPT-4o model in Azure
                 </p>
               </div>
@@ -454,7 +454,7 @@ export default function AISettings() {
 
           {testResult && (
             <div className={`mt-2 p-2 rounded text-sm ${
-              testResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              testResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
             }`}>
               <div className="flex items-center">
                 {testResult.success ? <Check className="h-4 w-4 mr-1" /> : <X className="h-4 w-4 mr-1" />}
@@ -465,7 +465,7 @@ export default function AISettings() {
         </div>
 
         <div className="mt-6">
-          <h3 className="text-lg font-medium mb-3">AI Features</h3>
+          <h3 className="text-lg font-medium mb-3 text-[var(--color-text)]">AI Features</h3>
           <div className="space-y-3">
             {/* Product Descriptions */}
             <label className="flex items-center">
@@ -490,8 +490,8 @@ export default function AISettings() {
                 }
               />
               <div>
-                <span className="text-sm font-medium text-gray-700">Product Descriptions</span>
-                <p className="text-sm text-gray-600">Generate compelling product descriptions automatically</p>
+                <span className="text-sm font-medium text-[var(--color-text)]">Product Descriptions</span>
+                <p className="text-sm text-[var(--color-textSecondary)]">Generate compelling product descriptions automatically</p>
               </div>
             </label>
 
@@ -518,8 +518,8 @@ export default function AISettings() {
                 }
               />
               <div>
-                <span className="text-sm font-medium text-gray-700">Search Assistant</span>
-                <p className="text-sm text-gray-600">Improve search queries and provide better results</p>
+                <span className="text-sm font-medium text-[var(--color-text)]">Search Assistant</span>
+                <p className="text-sm text-[var(--color-textSecondary)]">Improve search queries and provide better results</p>
               </div>
             </label>
 
@@ -546,8 +546,8 @@ export default function AISettings() {
                 }
               />
               <div>
-                <span className="text-sm font-medium text-gray-700">Product Recommendations</span>
-                <p className="text-sm text-gray-600">AI-powered product recommendations for customers</p>
+                <span className="text-sm font-medium text-[var(--color-text)]">Product Recommendations</span>
+                <p className="text-sm text-[var(--color-textSecondary)]">AI-powered product recommendations for customers</p>
               </div>
             </label>
 
@@ -574,8 +574,8 @@ export default function AISettings() {
                 }
               />
               <div>
-                <span className="text-sm font-medium text-gray-700">Customer Support</span>
-                <p className="text-sm text-gray-600">AI-powered customer support for product questions</p>
+                <span className="text-sm font-medium text-[var(--color-text)]">Customer Support</span>
+                <p className="text-sm text-[var(--color-textSecondary)]">AI-powered customer support for product questions</p>
               </div>
             </label>
 
@@ -590,24 +590,24 @@ export default function AISettings() {
                   disabled={!settings.ai?.azureOpenAI?.enabled}
                 />
                 <div>
-                  <span className="text-sm font-medium text-gray-700">Image Analysis</span>
-                  <p className="text-sm text-gray-600">Analyze product images and generate descriptions using GPT-4o vision</p>
+                  <span className="text-sm font-medium text-[var(--color-text)]">Image Analysis</span>
+                  <p className="text-sm text-[var(--color-textSecondary)]">Analyze product images and generate descriptions using GPT-4o vision</p>
                 </div>
               </label>
             )}
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">
+        <div className="mt-6 p-4 bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)]">
+          <h4 className="text-sm font-medium text-[var(--color-text)] mb-2">
             About {settings.ai?.provider === 'grok' ? 'Grok AI' : 'Azure OpenAI'}
           </h4>
           {settings.ai?.provider === 'grok' ? (
-            <p className="text-sm text-blue-800">
+            <p className="text-sm text-[var(--color-textSecondary)]">
               Grok AI is xAI&apos;s advanced language model that can help enhance your e-commerce store with intelligent features like automated product descriptions, smart search assistance, and personalized recommendations.
             </p>
           ) : (
-            <p className="text-sm text-blue-800">
+            <p className="text-sm text-[var(--color-textSecondary)]">
               Azure OpenAI provides access to OpenAI&apos;s powerful GPT-4o model with vision capabilities through Microsoft&apos;s secure cloud platform. This enables advanced features like image analysis, product description generation, and intelligent customer support.
             </p>
           )}
@@ -617,7 +617,7 @@ export default function AISettings() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-md hover:filter hover:brightness-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Saving...' : 'Save AI Settings'}
           </button>

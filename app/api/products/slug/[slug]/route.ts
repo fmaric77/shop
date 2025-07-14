@@ -4,11 +4,12 @@ import Product from '@/models/Product';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  context: { params: Promise<{ slug: string }> }
 ) {
   try {
     await connectDB();
     
+    const params = await context.params;
     const { slug } = params;
     const product = await Product.findOne({ slug })
       .populate('category', 'name slug description');

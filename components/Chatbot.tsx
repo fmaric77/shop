@@ -4,15 +4,26 @@ import { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, X, Bot, User, Loader } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
+
+interface Product {
+  id: string;
+  title: string;
+  slug: string;
+  price: number;
+  description?: string;
+  tags?: string[];
+  category?: {
+    name: string;
+  };
+}
 
 interface Message {
   id: string;
   text: string;
   isUser: boolean;
   timestamp: Date;
-  products?: any[];
+  products?: Product[];
 }
 
 interface ChatbotProps {
@@ -31,9 +42,8 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { theme } = useTheme();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -70,7 +80,7 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev: Message[]) => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
 
@@ -99,7 +109,7 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
           ...(data.recommendedProducts && data.recommendedProducts.length > 0 ? { products: data.recommendedProducts } : {}),
         };
 
-        setMessages(prev => [...prev, aiMessage]);
+        setMessages((prev: Message[]) => [...prev, aiMessage]);
       } else {
         throw new Error('Failed to get AI response');
       }
@@ -111,7 +121,7 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev: Message[]) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -274,7 +284,7 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
                   color: 'var(--color-text)',
                   borderRadius: 'var(--border-radius-medium)',
                   '--tw-ring-color': 'var(--color-primary)'
-                }}
+                } as React.CSSProperties}
                 disabled={isLoading}
               />
               <button

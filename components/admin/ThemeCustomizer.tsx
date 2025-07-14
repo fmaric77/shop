@@ -244,20 +244,20 @@ export default function ThemeCustomizer() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="theme-surface rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Theme Customizer</h2>
+        <h2 className="text-2xl font-bold text-[var(--color-text)]">Theme Customizer</h2>
         <div className="flex gap-2">
           <button
             onClick={applyPreview}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white rounded-md hover:filter hover:brightness-90 transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             Preview
           </button>
           <button
             onClick={saveTheme}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-success)] text-white rounded-md hover:filter hover:brightness-90 transition-colors"
           >
             <Save className="w-4 h-4" />
             Save Theme

@@ -127,18 +127,18 @@ export default function CurrencySettingsEditor() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Currency Settings</h2>
+      <div className="theme-surface p-6 rounded-lg shadow">
+        <h2 className="text-xl font-semibold mb-4 text-[var(--color-text)]">Currency Settings</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
               Currency Code
             </label>
             <select
               value={settings.currency.code}
               onChange={(e) => handleCurrencyChange('code', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               {Object.entries(CURRENCIES).map(([code, info]) => (
                 <option key={code} value={code}>
@@ -149,39 +149,39 @@ export default function CurrencySettingsEditor() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
               Currency Symbol
             </label>
             <input
               type="text"
               value={settings.currency.symbol}
               onChange={(e) => handleCurrencyChange('symbol', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               placeholder="$"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
               Currency Name
             </label>
             <input
               type="text"
               value={settings.currency.name}
               onChange={(e) => handleCurrencyChange('name', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               placeholder="US Dollar"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
               Symbol Position
             </label>
             <select
               value={settings.currency.position}
               onChange={(e) => handleCurrencyChange('position', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               <option value="before">Before amount (e.g., $100)</option>
               <option value="after">After amount (e.g., 100 kr)</option>
@@ -189,13 +189,13 @@ export default function CurrencySettingsEditor() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
               Decimal Places
             </label>
             <select
               value={settings.currency.decimalPlaces}
               onChange={(e) => handleCurrencyChange('decimalPlaces', parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               <option value={0}>0 (e.g., $100)</option>
               <option value={1}>1 (e.g., $100.1)</option>
@@ -206,13 +206,13 @@ export default function CurrencySettingsEditor() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
               Thousands Separator
             </label>
             <select
               value={settings.currency.thousandsSeparator}
               onChange={(e) => handleCurrencyChange('thousandsSeparator', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               <option value=",">Comma (1,000)</option>
               <option value=".">Period (1.000)</option>
@@ -222,13 +222,13 @@ export default function CurrencySettingsEditor() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
               Decimal Separator
             </label>
             <select
               value={settings.currency.decimalSeparator}
               onChange={(e) => handleCurrencyChange('decimalSeparator', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               <option value=".">Period (100.50)</option>
               <option value=",">Comma (100,50)</option>
@@ -257,30 +257,30 @@ export default function CurrencySettingsEditor() {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4">Stripe Settings</h2>
+      <div className="theme-surface p-6 rounded-lg shadow">
+        <h2 className="text-xl font-semibold mb-4 text-[var(--color-text)]">Stripe Settings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
               Publishable Key
             </label>
             <input
               type="text"
               value={settings.stripe.publishableKey}
               onChange={(e) => handleStripeChange('publishableKey', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               placeholder="pk_live_..."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
               Secret Key
             </label>
             <input
               type="password"
               value={settings.stripe.secretKey}
               onChange={(e) => handleStripeChange('secretKey', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               placeholder="sk_live_..."
             />
           </div>

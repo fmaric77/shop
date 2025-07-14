@@ -4,10 +4,11 @@ import Category from '@/models/Category';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const params = await context.params;
     const { id } = params;
     const deleted = await Category.findByIdAndDelete(id);
     if (!deleted) {

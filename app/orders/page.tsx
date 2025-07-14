@@ -36,12 +36,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user, isAuthenticated } = useAuth();
-  const { theme } = useTheme();
   const { formatPrice } = useCurrency();
-
-  useEffect(() => {
-    fetchOrders();
-  }, []);
 
   const fetchOrders = async () => {
     try {
@@ -61,6 +56,29 @@ export default function OrdersPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchOrdersData = async () => {
+      try {
+        const endpoint = isAuthenticated ? '/api/orders/user' : '/api/orders';
+        const response = await fetch(endpoint);
+        
+        if (response.ok) {
+          const data = await response.json();
+          setOrders(data);
+        } else {
+          // Authentication failed, show message
+          setOrders([]);
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchOrdersData();
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (

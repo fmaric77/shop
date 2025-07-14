@@ -29,7 +29,9 @@ export async function POST(request: NextRequest) {
     } else {
       const grok = await getGrokInstance();
       if (grok) {
-        const result = await grok.callRaw(prompt);
+        const result = await grok.makeCustomRequest([
+          { role: 'user', content: prompt }
+        ]);
         if (result.success) {
           resultText = result.data;
         }

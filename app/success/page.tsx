@@ -2,11 +2,9 @@
 
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useSearchParams } from 'next/navigation';
 
 export default function SuccessPage() {
-  const { theme } = useTheme();
   const searchParams = useSearchParams();
   const sessionId = searchParams?.get('session_id') ?? null;
 

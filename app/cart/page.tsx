@@ -14,7 +14,6 @@ import AuthModal from '@/components/auth/AuthModal';
 export default function CartPage() {
   const { state, removeFromCart } = useCart();
   const { user, isAuthenticated } = useAuth();
-  const { theme } = useTheme();
   const { formatPrice } = useCurrency();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');

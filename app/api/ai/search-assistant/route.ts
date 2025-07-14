@@ -5,6 +5,19 @@ import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
 import StoreSettings from '@/models/StoreSettings';
 
+interface ProductType {
+  _id: string;
+  title: string;
+  slug: string;
+  price: number;
+  description?: string;
+  tags?: string[];
+  category?: {
+    name: string;
+  };
+  toObject?: () => any;
+}
+
 // POST /api/ai/search-assistant - AI-powered chatbot for product assistance
 export async function POST(request: NextRequest) {
   try {
@@ -42,7 +55,7 @@ export async function POST(request: NextRequest) {
 User query: "${query}"
 
 Available products:
-${availableProducts.map(p => `- ${p.title} (${p.category?.name || 'No category'}) - ${symbol}${p.price.toFixed(2)} - ${p.description || 'No description'}`).join('\n')}
+${availableProducts.map((p: ProductType) => `- ${p.title} (${p.category?.name || 'No category'}) - ${symbol}${p.price.toFixed(2)} - ${p.description || 'No description'}`).join('\n')}
 
 Provide brief answers and relevant recommendations only.`;
 
@@ -81,8 +94,8 @@ Provide brief answers and relevant recommendations only.`;
       const queryLower = query.toLowerCase();
       const keywords = queryLower.split(/\s+/).filter(Boolean);
       const fallbackProducts = availableProducts
-        .filter((product: any) => {
-          return keywords.some(kw =>
+        .filter((product: ProductType) => {
+          return keywords.some((kw: string) =>
             product.title.toLowerCase().includes(kw) ||
             product.slug.toLowerCase().includes(kw) ||
             product.description?.toLowerCase().includes(kw) ||
@@ -90,10 +103,10 @@ Provide brief answers and relevant recommendations only.`;
             product.category?.name.toLowerCase().includes(kw)
           );
         })
-        .filter(product => product.title)
+        .filter((product: ProductType) => product.title)
         .slice(0, 5);
       // Include link field for each product
-      const fallbackWithLinks = fallbackProducts.map((product: any) => ({
+      const fallbackWithLinks = fallbackProducts.map((product: ProductType) => ({
         ...product.toObject?.(),
         url: `/product/${product.slug}`
       }));
@@ -107,8 +120,8 @@ Provide brief answers and relevant recommendations only.`;
     const queryLower = query.toLowerCase();
     const keywords = queryLower.split(/\s+/).filter(Boolean);
     const recommendedProducts = availableProducts
-      .filter((product: any) => {
-        return keywords.some(kw =>
+      .filter((product: ProductType) => {
+        return keywords.some((kw: string) =>
           product.title.toLowerCase().includes(kw) ||
           product.slug.toLowerCase().includes(kw) ||
           product.description?.toLowerCase().includes(kw) ||
@@ -116,10 +129,10 @@ Provide brief answers and relevant recommendations only.`;
           product.category?.name.toLowerCase().includes(kw)
         );
       })
-      .filter(product => product.title)
+      .filter((product: ProductType) => product.title)
       .slice(0, 5); // Limit to 5 recommendations
     // Attach URL for each recommended product
-    const recommendedWithLinks = recommendedProducts.map((product: any) => ({
+    const recommendedWithLinks = recommendedProducts.map((product: ProductType) => ({
       ...product.toObject?.(),
       url: `/product/${product.slug}`
     }));
