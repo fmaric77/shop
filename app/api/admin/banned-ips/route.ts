@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBannedIPs, manuallyUnbanIP } from '@/lib/ipBan';
+import { getBannedIPsAsync, manuallyUnbanIPAsync } from '@/lib/ipBan';
 import { verifyAdmin } from '@/lib/adminAuth';
+
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,8 +14,7 @@ export async function GET(request: NextRequest) {
         { status: adminCheck.error === 'No authentication token' ? 401 : 403 }
       );
     }
-
-    const bannedIPs = getBannedIPs();
+    const bannedIPs = await getBannedIPsAsync();
     return NextResponse.json({ bannedIPs });
   } catch (error) {
     console.error('Error fetching banned IPs:', error);
@@ -34,18 +35,14 @@ export async function DELETE(request: NextRequest) {
         { status: adminCheck.error === 'No authentication token' ? 401 : 403 }
       );
     }
-
     const { ip } = await request.json();
-    
     if (!ip) {
       return NextResponse.json(
         { error: 'IP address is required' },
         { status: 400 }
       );
     }
-
-    const wasUnbanned = manuallyUnbanIP(ip);
-    
+    const wasUnbanned = await manuallyUnbanIPAsync(ip);
     return NextResponse.json({ 
       success: true, 
       message: wasUnbanned ? `IP ${ip} has been unbanned` : `IP ${ip} was not banned`

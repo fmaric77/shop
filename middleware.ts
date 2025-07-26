@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminToken } from '@/lib/adminAuthEdge';
-import { checkIPBan, recordAdminAccessAttempt } from '@/lib/ipBan';
+import { checkIPBan, recordAdminAccessAttempt } from '@/lib/ipBanEdge';
 
 export async function middleware(request: NextRequest) {
   // Check for IP bans first (for any admin access)

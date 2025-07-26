@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordAdminAccessAttempt } from '@/lib/ipBan';
+import { recordAdminAccessAttemptAsync } from '@/lib/ipBan';
+
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
     // Record the unauthorized admin access attempt
-    const result = recordAdminAccessAttempt(request);
+    const result = await recordAdminAccessAttemptAsync(request);
     
     const response = {
       attemptsRemaining: result.attemptsRemaining,
