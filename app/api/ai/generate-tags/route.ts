@@ -34,8 +34,9 @@ export async function POST(request: NextRequest) {
       const grok = await getGrokInstance();
       if (grok) {
         const result = await grok.generateProductTags(productTitle, description || '', category || '');
-        if (result.success) {
-          tags = result.data.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0);
+        if (result.success && result.data && Array.isArray(result.data.choices)) {
+          const tagString = result.data.choices[0]?.message?.content || '';
+          tags = tagString.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0);
         }
       }
     }

@@ -1,15 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Package, Tag, ArrowLeft, Palette, Settings, Database, Brain, CreditCard } from 'lucide-react';
+import { Plus, Package, Tag, ArrowLeft, Palette, Settings, Database, Brain, CreditCard, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useAuth } from '@/contexts/AuthContext';
 import ThemeCustomizer from '@/components/admin/ThemeCustomizer';
 import ContentEditor from '@/components/admin/ContentEditor';
 import CurrencySettings from '@/components/admin/CurrencySettings';
 import DatabaseConfig from '@/components/admin/DatabaseConfig';
 import AISettings from '@/components/admin/GrokAISettings';
 import PaymentSettings from '@/components/admin/PaymentSettings';
+import SecuritySettings from '@/components/admin/SecuritySettings';
 
 interface Category {
   _id: string;
@@ -69,7 +71,8 @@ interface Product {
 }
 
 export default function AdminPanel() {
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'themes' | 'content' | 'settings' | 'payment' | 'database' | 'ai'>('payment');
+  const { user, loading: authLoading, isAdmin } = useAuth();
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'themes' | 'content' | 'settings' | 'payment' | 'database' | 'ai' | 'security'>('payment');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +80,7 @@ export default function AdminPanel() {
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [generatingTags, setGeneratingTags] = useState(false);
   const [creatingTemplate, setCreatingTemplate] = useState(false);
+  const [accessAttemptRecorded, setAccessAttemptRecorded] = useState(false);
   const { formatPrice } = useCurrency();
 
   // Product form state
@@ -140,6 +144,58 @@ export default function AdminPanel() {
     }
   };
 
+  // Record unauthorized access attempt
+  useEffect(() => {
+    if (!authLoading && (!user || !isAdmin) && !accessAttemptRecorded) {
+      setAccessAttemptRecorded(true);
+      fetch('/api/admin/access-attempt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).catch(error => {
+        console.error('Failed to record access attempt:', error);
+      });
+    }
+  }, [user, isAdmin, authLoading, accessAttemptRecorded]);
+
+  // Check if user is admin - show access denied if not
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md text-center">
+          <div className="mb-4">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Settings className="w-8 h-8 text-red-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+            <p className="text-gray-600 mb-6">
+              You don't have permission to access the admin panel. Only administrators can access this area.
+            </p>
+            <Link 
+              href="/"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -159,7 +215,7 @@ export default function AdminPanel() {
         price: number;
         category: string;
         tags: string[];
-        imagesCSV: string;
+        images: string[];
       } = {
         title: productForm.title,
         description: productForm.description,
@@ -514,6 +570,17 @@ export default function AdminPanel() {
               >
                 <Brain className="h-5 w-5 inline mr-2" />
                 AI
+              </button>
+              <button
+                onClick={() => setActiveTab('security')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'security'
+                    ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
+                    : 'border-transparent text-[var(--color-textSecondary)] hover:text-[var(--color-text)] hover:border-[var(--color-border)]'
+                }`}
+              >
+                <Shield className="h-5 w-5 inline mr-2" />
+                Security
               </button> 
             </nav>
           </div>
@@ -978,6 +1045,13 @@ export default function AdminPanel() {
             <div className="theme-surface rounded-lg shadow-md p-6">
               <AISettings />
             </div>
+          </div>
+        )}
+
+        {/* Security Tab */}
+        {activeTab === 'security' && (
+          <div className="space-y-6">
+            <SecuritySettings />
           </div>
         )}
       </div>

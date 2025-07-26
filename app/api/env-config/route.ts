@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // Add other required environment variables if they don't exist
     const requiredVars = {
       'JWT_SECRET': 'your-super-secret-jwt-key-change-this-in-production',
-      'NEXTAUTH_SECRET': 'your-nextauth-secret-key-change-this-in-production',
+      'APP_URL': 'http://localhost:3000',
       'STRIPE_SECRET_KEY': 'your-stripe-secret-key',
       'STRIPE_PUBLISHABLE_KEY': 'your-stripe-publishable-key',
       'STRIPE_WEBHOOK_SECRET': 'your-stripe-webhook-secret',

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, X, Bot, User, Loader } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface Product {
   id: string;
@@ -43,6 +42,7 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [aiEnabled, setAiEnabled] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -68,6 +68,24 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
     };
 
     fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    // Load store settings to check AI availability
+    async function fetchSettings() {
+      try {
+        const res = await fetch('/api/store-settings');
+        if (res.ok) {
+          const settings = await res.json();
+          const azure = settings.ai?.azureOpenAI;
+          // Show chatbot only if Azure OpenAI is enabled and has an API key
+          if (azure?.enabled && azure.apiKey) {
+            setAiEnabled(true);
+          }
+        }
+      } catch {}
+    }
+    fetchSettings();
   }, []);
 
   const handleSendMessage = async () => {
@@ -113,7 +131,7 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
       } else {
         throw new Error('Failed to get AI response');
       }
-    } catch (error) {
+    } catch {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: "I'm sorry, I'm having trouble responding right now. Please try again later.",
@@ -141,6 +159,8 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
       hour12: true 
     });
   };
+
+  if (!aiEnabled) return null;
 
   return (
     <div className={`fixed bottom-4 right-4 z-50 ${className}`}>

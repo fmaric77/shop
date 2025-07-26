@@ -16,6 +16,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login, register } = useAuth();
+  // Honeypot and time-check for bot protection
+  const [honeypot, setHoneypot] = useState('');
+  const [startTime, setStartTime] = useState(Date.now());
 
   const [formData, setFormData] = useState({
     name: '',
@@ -27,6 +30,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     setFormData({ name: '', email: '', password: '' });
     setError('');
     setShowPassword(false);
+    setHoneypot('');
   };
 
   const handleClose = () => {
@@ -44,7 +48,26 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
       if (mode === 'login') {
         result = await login(formData.email, formData.password);
       } else {
-        result = await register(formData.name, formData.email, formData.password);
+        // Honeypot must be empty
+        if (honeypot.trim() !== '') {
+          setError('Bot detected');
+          setLoading(false);
+          return;
+        }
+        // Require at least 3 seconds to fill the form
+        const timeElapsed = Date.now() - startTime;
+        if (timeElapsed < 3000) {
+          setError('Form submitted too quickly');
+          setLoading(false);
+          return;
+        }
+        result = await register(
+          formData.name,
+          formData.email,
+          formData.password,
+          honeypot,
+          startTime
+        );
       }
 
       if (result.success) {
@@ -52,7 +75,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
       } else {
         setError(result.error || 'An error occurred');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -60,8 +83,13 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   };
 
   const switchMode = () => {
-    setMode(mode === 'login' ? 'register' : 'login');
+    const newMode = mode === 'login' ? 'register' : 'login';
+    setMode(newMode);
     resetForm();
+    if (newMode === 'register') {
+      setStartTime(Date.now());
+      setHoneypot('');
+    }
   };
 
   if (!isOpen) return null;
@@ -159,6 +187,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
               </p>
             )}
           </div>
+
 
           <button
             type="submit"

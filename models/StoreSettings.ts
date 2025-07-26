@@ -141,6 +141,22 @@ const StoreSettingsSchema = new mongoose.Schema({
       default: '',
     },
   },
+  // PayPal API keys for payment configuration
+  paypal: {
+    clientId: {
+      type: String,
+      default: '',
+    },
+    secret: {
+      type: String,
+      default: '',
+    },
+    mode: {
+      type: String,
+      enum: ['sandbox', 'live'],
+      default: 'sandbox',
+    },
+  },
   // Make this a singleton - only one settings document
   _id: {
     type: String,
@@ -150,4 +166,4 @@ const StoreSettingsSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-export default mongoose.models.StoreSettings || mongoose.model('StoreSettings', StoreSettingsSchema);
+export default mongoose.models?.StoreSettings || mongoose.model('StoreSettings', StoreSettingsSchema);

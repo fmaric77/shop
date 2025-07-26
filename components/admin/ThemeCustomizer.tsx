@@ -152,7 +152,7 @@ export default function ThemeCustomizer() {
     });
   };
 
-  const handleLayoutChange = (key: string, value: any) => {
+  const handleLayoutChange = (key: string, value: string | number | boolean | object) => {
     if (!currentTheme) return;
     setCurrentTheme({
       ...currentTheme,
@@ -160,28 +160,6 @@ export default function ThemeCustomizer() {
         ...currentTheme.layout,
         [key]: value,
       },
-    });
-  };
-
-  const handleNestedLayoutChange = (keys: string[], value: any) => {
-    if (!currentTheme) return;
-    
-    const updateNestedObject = (obj: any, keyPath: string[], newValue: any) => {
-      const newObj = { ...obj };
-      let current = newObj;
-      
-      for (let i = 0; i < keyPath.length - 1; i++) {
-        current[keyPath[i]] = { ...current[keyPath[i]] };
-        current = current[keyPath[i]];
-      }
-      
-      current[keyPath[keyPath.length - 1]] = newValue;
-      return newObj;
-    };
-
-    setCurrentTheme({
-      ...currentTheme,
-      layout: updateNestedObject(currentTheme.layout, keys, value),
     });
   };
 

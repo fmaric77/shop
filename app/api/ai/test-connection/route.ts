@@ -5,11 +5,18 @@ import { getGrokInstance, GrokAI } from '@/lib/grok';
 export async function POST(request: NextRequest) {
   try {
     // Allow passing AI provider configuration in request body for testing
-    let body: { provider?: string; [key: string]: any } = {};
+interface TestConnectionBody {
+  provider?: string;
+  apiKey?: string;
+  endpoint?: string;
+  model?: string;
+  apiVersion?: string;
+}
+let body: TestConnectionBody = {};
     try {
       const text = await request.text();
       if (text) {
-        body = JSON.parse(text);
+        body = JSON.parse(text) as TestConnectionBody;
       }
     } catch {
       // If no body or invalid JSON, use empty object

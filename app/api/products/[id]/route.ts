@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
+import { verifyAdmin, createAdminOnlyResponse, createUnauthorizedResponse } from '@/lib/adminAuth';
 
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Verify admin access
+    const adminCheck = await verifyAdmin(request);
+    if (!adminCheck.success) {
+      return adminCheck.error === 'No authentication token' 
+        ? createUnauthorizedResponse(adminCheck.error!)
+        : createAdminOnlyResponse(adminCheck.error!);
+    }
+
     await connectDB();
     const params = await context.params;
     const { id } = params;
@@ -26,13 +35,21 @@ export async function PUT(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Verify admin access
+    const adminCheck = await verifyAdmin(request);
+    if (!adminCheck.success) {
+      return adminCheck.error === 'No authentication token' 
+        ? createUnauthorizedResponse(adminCheck.error!)
+        : createAdminOnlyResponse(adminCheck.error!);
+    }
+
     await connectDB();
     const params = await context.params;
     const { id } = params;
     const rawData = await request.json();
     // Handle multiple image URLs
     const { images: imageUrls, ...rest } = rawData;
-    const updateData: any = { ...rest };
+    const updateData: Record<string, unknown> = { ...rest };
     if (Array.isArray(imageUrls)) {
       const formatted = imageUrls.map((url: string, idx: number) => ({ url, alt: '', order: idx }));
       updateData.images = formatted;

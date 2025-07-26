@@ -4,10 +4,38 @@ interface GrokConfig {
   enabled: boolean;
 }
 
+interface GrokMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+interface GrokRequestOptions {
+  maxTokens?: number;
+  temperature?: number;
+}
+
 interface GrokResponse {
   success: boolean;
-  data?: any;
+  data?: {
+    choices: Array<{
+      message: {
+        content: string;
+      };
+    }>;
+  };
   error?: string;
+}
+
+interface Product {
+  _id: string;
+  title: string;
+  description?: string;
+  price: number;
+  category: {
+    name: string;
+    _id: string;
+  } | string;
+  tags: string[];
 }
 
 export class GrokAI {
@@ -17,7 +45,7 @@ export class GrokAI {
     this.config = config;
   }
 
-  private async makeRequest(messages: any[], options: any = {}): Promise<GrokResponse> {
+  private async makeRequest(messages: GrokMessage[], options: GrokRequestOptions = {}): Promise<GrokResponse> {
     if (!this.config.apiKey) {
       return {
         success: false,
@@ -73,18 +101,18 @@ export class GrokAI {
   }
 
   // Public method to access makeRequest for custom prompts
-  async makeCustomRequest(messages: any[], options: any = {}): Promise<GrokResponse> {
+  async makeCustomRequest(messages: GrokMessage[], options: GrokRequestOptions = {}): Promise<GrokResponse> {
     return this.makeRequest(messages, options);
   }
 
   async generateProductDescription(productTitle: string, category: string, features: string[]): Promise<GrokResponse> {
-    const messages = [
+    const messages: GrokMessage[] = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: 'You are a professional e-commerce copywriter. Generate compelling, SEO-friendly product descriptions that highlight key features and benefits. Keep descriptions concise but informative.',
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: `Generate a product description for:
         Title: ${productTitle}
         Category: ${category}
@@ -97,18 +125,18 @@ export class GrokAI {
     return this.makeRequest(messages, { maxTokens: 300 });
   }
 
-  async generateProductRecommendations(userQuery: string, products: any[]): Promise<GrokResponse> {
-    const messages = [
+  async generateProductRecommendations(userQuery: string, products: Product[]): Promise<GrokResponse> {
+    const messages: GrokMessage[] = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: 'You are a helpful shopping assistant. Based on the user\'s query and available products, recommend the most suitable products and explain why they would be a good fit.',
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: `User query: "${userQuery}"
         
         Available products:
-        ${products.map(p => `- ${p.title} (${p.category?.name || 'No category'}) - $${p.price} - ${p.description || 'No description'}`).join('\n')}
+        ${products.map(p => `- ${p.title} (${typeof p.category === 'object' ? p.category.name : p.category}) - $${p.price} - ${p.description || 'No description'}`).join('\n')}
         
         Please recommend the most suitable products and explain why they would be a good fit for the user's needs.`,
       },
@@ -118,13 +146,13 @@ export class GrokAI {
   }
 
   async improveSearchQuery(query: string): Promise<GrokResponse> {
-    const messages = [
+    const messages: GrokMessage[] = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: 'You are a search optimization assistant. Given a user\'s search query, suggest better, more specific search terms that would help them find what they\'re looking for in an e-commerce store.',
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: `Original search query: "${query}"
         
         Please suggest improved search terms or keywords that would help the user find more relevant products. Provide 3-5 alternative search suggestions.`,
@@ -135,13 +163,13 @@ export class GrokAI {
   }
 
   async generateProductTags(productTitle: string, description: string, category: string): Promise<GrokResponse> {
-    const messages = [
+    const messages: GrokMessage[] = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: 'You are a product categorization expert. Generate relevant tags/keywords for products that would help with search and organization.',
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: `Product: ${productTitle}
         Description: ${description}
         Category: ${category}
@@ -153,14 +181,14 @@ export class GrokAI {
     return this.makeRequest(messages, { maxTokens: 100 });
   }
 
-  async answerCustomerQuestion(question: string, productInfo: any): Promise<GrokResponse> {
-    const messages = [
+  async answerCustomerQuestion(question: string, productInfo: Record<string, unknown>): Promise<GrokResponse> {
+    const messages: GrokMessage[] = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: 'You are a helpful customer support assistant for an e-commerce store. Answer customer questions about products based on the available information. Be friendly, informative, and honest. If you don\'t have enough information, say so.',
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: `Customer question: "${question}"
         
         Product information:
@@ -174,13 +202,13 @@ export class GrokAI {
   }
 
   async testConnection(): Promise<GrokResponse> {
-    const messages = [
+    const messages: GrokMessage[] = [
       {
-        role: 'system',
+        role: 'system' as const,
         content: 'You are a test assistant. Respond with a simple confirmation message.',
       },
       {
-        role: 'user',
+        role: 'user' as const,
         content: 'Please respond with "Connection successful" to test the API connection.',
       },
     ];
@@ -194,7 +222,7 @@ export async function getGrokInstance(): Promise<GrokAI | null> {
     // Determine base URL for internal requests
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      : process.env.APP_URL || 'http://localhost:3000';
     const response = await fetch(`${baseUrl}/api/store-settings`);
     if (!response.ok) {
       throw new Error('Failed to fetch settings');

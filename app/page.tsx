@@ -40,10 +40,10 @@ export default function Home() {
   const [justAdded, setJustAdded] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
-  // AI search functionality state (commented out until implemented)
-  // const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
-  // const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
-  // const [aiRecommendations, setAiRecommendations] = useState<string>('');
+  // AI search functionality state
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState<string>('');
   const { state: cartState, addToCart } = useCart();
   const { theme } = useTheme();
   const { content } = useContent();
@@ -343,6 +343,29 @@ export default function Home() {
               )}
             </div>
           </div>
+          {/* AI Search Suggestions and Recommendations */}
+          {showSearchSuggestions && searchSuggestions.length > 0 && (
+            <div className="bg-white border rounded shadow p-2 mt-2 z-10">
+              <div className="font-semibold mb-1">AI Suggestions:</div>
+              <ul>
+                {searchSuggestions.map((suggestion, idx) => (
+                  <li
+                    key={idx}
+                    className="cursor-pointer hover:underline"
+                    onClick={() => setSearchTerm(suggestion)}
+                  >
+                    {suggestion}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {aiRecommendations && (
+            <div className="bg-blue-50 border border-blue-200 rounded p-2 mt-2 text-blue-900">
+              <div className="font-semibold mb-1">AI Recommendations:</div>
+              <div>{aiRecommendations}</div>
+            </div>
+          )}
         </div>
       </header>
 

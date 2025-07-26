@@ -12,16 +12,19 @@ interface ProductType {
   price: number;
   description?: string;
   tags?: string[];
-  category?: {
-    name: string;
-  };
-  toObject?: () => any;
+  category?: { name: string };
+  toObject?: () => Record<string, unknown>;
+}
+
+interface SearchAssistantRequest {
+  query: string;
+  products?: ProductType[];
 }
 
 // POST /api/ai/search-assistant - AI-powered chatbot for product assistance
 export async function POST(request: NextRequest) {
   try {
-    const { query, products } = await request.json();
+    const { query, products }: SearchAssistantRequest = await request.json();
     
     if (!query) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
@@ -70,11 +73,11 @@ Provide brief answers and relevant recommendations only.`;
         if (grok) {
           const messages = [
             {
-              role: 'system',
+              role: 'system' as const,
               content: 'You are a friendly and helpful shopping assistant chatbot. Provide conversational, helpful responses to customer inquiries about products.',
             },
             {
-              role: 'user',
+              role: 'user' as const,
               content: chatbotPrompt,
             },
           ];
@@ -142,7 +145,7 @@ Provide brief answers and relevant recommendations only.`;
       recommendedProducts: recommendedWithLinks
     });
   } catch (error) {
-    console.error('Error with AI search assistant:', error);
+    console.error('Error with AI search assistant:', error as unknown);
     return NextResponse.json({
       response: "I'm sorry, I'm experiencing some technical difficulties. Please try again in a moment.",
       recommendedProducts: []

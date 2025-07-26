@@ -3,7 +3,11 @@ import jwt from 'jsonwebtoken';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const decoded = jwt.verify(token, JWT_SECRET as string) as { userId: string };
     
     // Find user
     const user = await User.findById(decoded.userId).select('-password');
@@ -36,6 +40,7 @@ export async function GET(request: NextRequest) {
       name: user.name,
       email: user.email,
       role: user.role,
+      isAdmin: user.isAdmin || false,
       createdAt: user.createdAt,
     });
   } catch (error) {

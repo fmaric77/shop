@@ -90,7 +90,7 @@ export async function GET() {
     }
     
     return NextResponse.json(activeTheme);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch active theme' }, { status: 500 });
   }
 }

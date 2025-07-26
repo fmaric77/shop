@@ -1,8 +1,7 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+"use client";
+import React, { useState, useEffect } from 'react';
 import { useContent } from '@/contexts/ContentContext';
-import { Save, Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
+import { Save, Plus, Trash2, Upload } from 'lucide-react';
 
 interface FooterLink {
   title: string;
@@ -16,11 +15,6 @@ interface SocialLink {
   icon: string;
 }
 
-interface ContactInfo {
-  email: string;
-  phone: string;
-  address: string;
-}
 
 export default function ContentEditor() {
   const { content, updateContent } = useContent();
@@ -89,7 +83,7 @@ export default function ContentEditor() {
     }));
   };
 
-  const updateFooterLink = (index: number, field: keyof FooterLink, value: any) => {
+  const updateFooterLink = (index: number, field: keyof FooterLink, value: string | boolean) => {
     setLocalContent(prev => ({
       ...prev,
       footerLinks: prev.footerLinks.map((link, i) => 
@@ -112,7 +106,7 @@ export default function ContentEditor() {
     }));
   };
 
-  const updateSocialLink = (index: number, field: keyof SocialLink, value: any) => {
+  const updateSocialLink = (index: number, field: keyof SocialLink, value: string) => {
     setLocalContent(prev => ({
       ...prev,
       socialLinks: prev.socialLinks.map((link, i) => 
@@ -125,13 +119,6 @@ export default function ContentEditor() {
     setLocalContent(prev => ({
       ...prev,
       socialLinks: prev.socialLinks.filter((_, i) => i !== index)
-    }));
-  };
-
-  const updateContactInfo = (field: keyof ContactInfo, value: string) => {
-    setLocalContent(prev => ({
-      ...prev,
-      contactInfo: { ...prev.contactInfo, [field]: value }
     }));
   };
 

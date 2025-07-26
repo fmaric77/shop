@@ -6,6 +6,31 @@ export interface AzureOpenAIConfig {
   enabled: boolean;
 }
 
+export interface GenerateTextOptions {
+  maxTokens?: number;
+  temperature?: number;
+}
+
+export interface ProductData {
+  title: string;
+  price: number;
+  category: string;
+  tags?: string[];
+  description?: string;
+}
+
+export interface SearchContext {
+  category?: string;
+}
+
+export interface ChatChoice {
+  message?: { content: string };
+}
+
+export interface ChatCompletionResponse {
+  choices: ChatChoice[];
+}
+
 export class AzureOpenAI {
   private config: AzureOpenAIConfig;
 
@@ -33,12 +58,12 @@ export class AzureOpenAI {
         const errorData = await response.text();
         return { success: false, error: errorData };
       }
-    } catch (error) {
+    } catch (error: unknown) {
       return { success: false, error: String(error) };
     }
   }
 
-  async generateText(prompt: string, options: any = {}): Promise<string> {
+  async generateText(prompt: string, options: GenerateTextOptions = {}): Promise<string> {
     try {
       const response = await fetch(`${this.config.endpoint}/openai/deployments/${this.config.model}/chat/completions?api-version=${this.config.apiVersion}`, {
         method: 'POST',
@@ -57,11 +82,12 @@ export class AzureOpenAI {
         throw new Error(`Azure OpenAI API error: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as ChatCompletionResponse;
       return data.choices[0]?.message?.content || '';
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating text with Azure OpenAI:', error);
-      throw error;
+      if (error instanceof Error) throw error;
+      throw new Error(String(error));
     }
   }
 
@@ -99,15 +125,16 @@ export class AzureOpenAI {
         throw new Error(`Azure OpenAI API error: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as ChatCompletionResponse;
       return data.choices[0]?.message?.content || '';
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error analyzing image with Azure OpenAI:', error);
-      throw error;
+      if (error instanceof Error) throw error;
+      throw new Error(String(error));
     }
   }
 
-  async generateProductDescription(productData: any): Promise<string> {
+  async generateProductDescription(productData: ProductData): Promise<string> {
     const prompt = `Generate a compelling product description for the following product:
 Title: ${productData.title}
 Price: $${productData.price}
@@ -119,7 +146,7 @@ Please create an engaging, SEO-friendly product description that highlights the 
     return this.generateText(prompt);
   }
 
-  async generateTags(productData: any): Promise<string[]> {
+  async generateTags(productData: ProductData): Promise<string[]> {
     const prompt = `Generate relevant product tags/keywords for the following product:
 Title: ${productData.title}
 Description: ${productData.description}
@@ -132,7 +159,7 @@ Please provide 5-10 relevant tags separated by commas. Focus on searchable keywo
     return response.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
   }
 
-  async improveSearchQuery(query: string, context: any = {}): Promise<string> {
+  async improveSearchQuery(query: string, context: SearchContext = {}): Promise<string> {
     const prompt = `Improve this search query to get better product search results:
 Original query: "${query}"
 ${context.category ? `Category context: ${context.category}` : ''}
@@ -175,7 +202,7 @@ export async function getAzureOpenAIInstance(): Promise<AzureOpenAI | null> {
 
     azureOpenAIInstance = new AzureOpenAI(azureConfig);
     return azureOpenAIInstance;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating Azure OpenAI instance:', error);
     return null;
   }

@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
         const result = await grok.makeCustomRequest([
           { role: 'user', content: prompt }
         ]);
-        if (result.success) {
-          resultText = result.data;
+        if (result.success && result.data && Array.isArray(result.data.choices)) {
+          resultText = result.data.choices[0]?.message?.content || null;
         }
       }
     }

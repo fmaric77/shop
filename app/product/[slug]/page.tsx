@@ -12,6 +12,7 @@ import Reviews from '@/components/Reviews';
 import ReviewForm from '@/components/ReviewForm';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import getStripe from '@/lib/stripe';
 
 interface Category {
   _id: string;
@@ -72,6 +73,7 @@ interface Product {
 }
 
 export default function ProductPage() {
+  const { theme } = useTheme();
   const params = useParams();
   const slug = params.slug as string;
   const [product, setProduct] = useState<Product | null>(null);
@@ -82,12 +84,23 @@ export default function ProductPage() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
+  const [paypalEnabled, setPaypalEnabled] = useState(false);
+  const [paypalClientId, setPaypalClientId] = useState<string | null>(null);
+  interface Review {
+    _id: string;
+    rating: number;
+    comment: string;
+    userName: string;
+    createdAt: string;
+    verified: boolean;
+  }
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [canReview, setCanReview] = useState(false);
   const [reviewEligibility, setReviewEligibility] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'shipping' | 'reviews'>('description');
   const { addToCart } = useCart();
-  const { theme } = useTheme();
+  // const { theme } = useTheme(); // removed unused useTheme
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
 
@@ -108,8 +121,26 @@ export default function ProductPage() {
       }
     };
 
+    // Load store settings for PayPal
+    const loadSettings = async () => {
+      try {
+        const res = await fetch('/api/store-settings');
+        if (res.ok) {
+          const data = await res.json();
+          const pp = data.paypal;
+          if (pp?.clientId) {
+            setPaypalClientId(pp.clientId);
+            setPaypalEnabled(true);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading PayPal settings:', err);
+      }
+    };
+
     if (slug) {
       fetchProduct();
+      loadSettings();
     }
   }, [slug]);
 
@@ -180,6 +211,58 @@ export default function ProductPage() {
       } finally {
         setIsAddingToCart(false);
       }
+    }
+  };
+
+  const handleBuyNow = async (paymentMethod: 'stripe' | 'paypal' = 'stripe') => {
+    if (!product || isBuyingNow) return;
+
+    setIsBuyingNow(true);
+    try {
+      const items = [{
+        productId: product._id,
+        quantity: quantity,
+      }];
+
+      if (paymentMethod === 'paypal' && paypalEnabled) {
+        const response = await fetch('/api/paypal/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items }),
+        });
+
+        if (response.ok) {
+          const { approvalUrl } = await response.json();
+          window.location.href = approvalUrl;
+        } else {
+          const error = await response.json();
+          alert(error.error || 'Failed to create PayPal order');
+        }
+      } else {
+        // Stripe checkout
+        const stripe = await getStripe();
+        const response = await fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items }),
+        });
+
+        const { sessionId } = await response.json();
+        if (stripe) {
+          const result = await stripe.redirectToCheckout({ sessionId });
+          if (result.error) {
+            console.error('Stripe error:', result.error);
+          }
+        } else {
+          console.error('Stripe.js failed to load.');
+          alert('Payment service unavailable. Please try again later.');
+        }
+      }
+    } catch (error) {
+      console.error('Buy now error:', error);
+      alert('Error processing order');
+    } finally {
+      setIsBuyingNow(false);
     }
   };
 
@@ -458,18 +541,18 @@ export default function ProductPage() {
                 )}
               </div>
 
-              <div className="flex gap-3">
+              <div className="space-y-3">
                 <button
                   onClick={handleAddToCart}
                   disabled={!product.inStock || isAddingToCart}
-                  className={`flex-1 py-3 px-6 font-medium rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+                  className={`w-full py-3 px-6 font-medium rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
                     addedToCart ? 'bg-green-500' : ''
                   }`}
                   style={{
                     backgroundColor: addedToCart 
                       ? '#10b981'
                       : product.inStock 
-                        ? 'var(--color-primary)' 
+                        ? 'var(--color-secondary)' 
                         : 'var(--color-border)',
                     color: addedToCart || product.inStock ? 'white' : 'var(--color-textSecondary)',
                   }}
@@ -492,7 +575,53 @@ export default function ProductPage() {
                     'Out of Stock'
                   )}
                 </button>
-                
+
+                {product.inStock && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleBuyNow('stripe')}
+                      disabled={isBuyingNow}
+                      className="flex-1 py-3 px-6 font-medium rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      style={{
+                        backgroundColor: 'var(--color-primary)',
+                        color: 'white',
+                      }}
+                    >
+                      {isBuyingNow ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        'Buy Now with Card'
+                      )}
+                    </button>
+
+                    {paypalEnabled && paypalClientId && (
+                      <button
+                        onClick={() => handleBuyNow('paypal')}
+                        disabled={isBuyingNow}
+                        className="flex-1 py-3 px-6 font-medium rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        style={{
+                          backgroundColor: '#003087',
+                          color: 'white',
+                        }}
+                      >
+                        {isBuyingNow ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          'Buy Now with PayPal'
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 justify-center">                
                 <button
                   onClick={() => setIsWishlisted(!isWishlisted)}
                   className={`p-3 border rounded-md transition-colors ${
@@ -598,8 +727,8 @@ export default function ProductPage() {
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      p: ({ node, ...props }) => <p style={{ color: 'var(--color-text)' }} {...props} />,
-                      li: ({ node, ...props }) => <li style={{ color: 'var(--color-text)' }} {...props} />
+                      p: ({ ...props }) => <p style={{ color: 'var(--color-text)' }} {...props} />,
+                      li: ({ ...props }) => <li style={{ color: 'var(--color-text)' }} {...props} />
                     }}
                   >
                     {product.detailedDescription}

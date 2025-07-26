@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+// import { useTheme } from '@/contexts/ThemeContext'; // removed unused import
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ShoppingCart, Trash2, User } from 'lucide-react';
 import Image from 'next/image';
@@ -17,6 +17,27 @@ export default function CartPage() {
   const { formatPrice } = useCurrency();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+  const [paypalEnabled, setPaypalEnabled] = useState(false);
+  const [paypalClientId, setPaypalClientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/store-settings');
+        if (res.ok) {
+          const data = await res.json();
+          const pp = data.paypal;
+          if (pp?.clientId) {
+            setPaypalClientId(pp.clientId);
+            setPaypalEnabled(true);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading PayPal settings:', err);
+      }
+    }
+    loadSettings();
+  }, []);
 
   const handleCheckout = async () => {
     try {
@@ -35,6 +56,10 @@ export default function CartPage() {
 
       const { sessionId } = await response.json();
       
+      if (!stripe) {
+        console.error('Stripe.js failed to load.');
+        return;
+      }
       const result = await stripe.redirectToCheckout({ sessionId });
       
       if (result.error) {
@@ -42,6 +67,32 @@ export default function CartPage() {
       }
     } catch (error) {
       console.error('Checkout error:', error);
+    }
+  };
+
+  const handlePayPal = async () => {
+    try {
+      const items = state.items.map(item => ({
+        productId: item.productId._id,
+        quantity: item.quantity,
+      }));
+
+      const response = await fetch('/api/paypal/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+      });
+
+      if (response.ok) {
+        const { approvalUrl } = await response.json();
+        window.location.href = approvalUrl;
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to create PayPal order');
+      }
+    } catch (error) {
+      console.error('PayPal checkout error:', error);
+      alert('Error processing PayPal checkout');
     }
   };
 
@@ -206,28 +257,42 @@ export default function CartPage() {
                   )}
                   
                   {/* Checkout Buttons */}
-                  <div className="flex gap-4">
-                    <Link 
-                      href="/"
-                      className="flex-1 px-6 py-3 rounded-lg hover:opacity-80 transition-opacity text-center"
-                      style={{ 
-                        backgroundColor: 'var(--color-surface)',
-                        color: 'var(--color-text)',
-                        borderRadius: 'var(--border-radius-medium)'
-                      }}
-                    >
-                      Continue Shopping
-                    </Link>
-                    <button
-                      onClick={handleCheckout}
-                      className="flex-1 text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
-                      style={{ 
-                        backgroundColor: 'var(--color-primary)',
-                        borderRadius: 'var(--border-radius-medium)'
-                      }}
-                    >
-                      {isAuthenticated ? 'Checkout' : 'Guest Checkout'}
-                    </button>
+                  <div className="space-y-3">
+                    <div className="flex gap-4">
+                      <Link 
+                        href="/"
+                        className="flex-1 px-6 py-3 rounded-lg hover:opacity-80 transition-opacity text-center"
+                        style={{ 
+                          backgroundColor: 'var(--color-surface)',
+                          color: 'var(--color-text)',
+                          borderRadius: 'var(--border-radius-medium)'
+                        }}
+                      >
+                        Continue Shopping
+                      </Link>
+                      <button
+                        onClick={handleCheckout}
+                        className="flex-1 text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+                        style={{ 
+                          backgroundColor: 'var(--color-primary)',
+                          borderRadius: 'var(--border-radius-medium)'
+                        }}
+                      >
+                        {isAuthenticated ? 'Checkout with Card' : 'Guest Checkout with Card'}
+                      </button>
+                    </div>
+                    {paypalEnabled && paypalClientId && (
+                      <button
+                        onClick={handlePayPal}
+                        className="w-full text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity"
+                        style={{ 
+                          backgroundColor: '#003087', // PayPal blue
+                          borderRadius: 'var(--border-radius-medium)'
+                        }}
+                      >
+                        Pay with PayPal
+                      </button>
+                    )}
                   </div>
                   
                   {!isAuthenticated && (

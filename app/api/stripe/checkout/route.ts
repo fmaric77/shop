@@ -31,9 +31,9 @@ export async function POST(request: NextRequest) {
     
     if (token) {
       try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
         user = await User.findById(decoded.userId);
-      } catch (error) {
+      } catch {
         // Invalid token, proceed as guest
         console.log('Invalid token, proceeding as guest checkout');
       }
@@ -63,12 +63,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare session configuration
-    const sessionConfig: any = {
+    const sessionConfig: Record<string, unknown> = {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/cart`,
+      success_url: `${process.env.APP_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.APP_URL || 'http://localhost:3000'}/cart`,
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB', 'AU', 'DE', 'FR', 'IT', 'ES'],
       },

@@ -63,7 +63,7 @@ export default function AISettings() {
     }
   };
 
-  const handleAISettingChange = (field: string, value: any) => {
+  const handleAISettingChange = (field: string, value: string | boolean) => {
     if (!settings) return;
 
     const fieldParts = field.split('.');
@@ -157,21 +157,21 @@ export default function AISettings() {
     if (fieldParts.length === 1) {
       // Handle provider change
       if (field === 'provider') {
-        newSettings.ai.provider = value;
+        newSettings.ai.provider = value as string;
       }
     } else if (fieldParts.length === 2) {
       const [provider, setting] = fieldParts;
       if (provider === 'grok') {
-        (newSettings.ai.grok as any)[setting] = value;
+        (newSettings.ai.grok as unknown as Record<string, string | boolean>)[setting] = value;
       } else if (provider === 'azureOpenAI') {
-        (newSettings.ai.azureOpenAI as any)[setting] = value;
+        (newSettings.ai.azureOpenAI as unknown as Record<string, string | boolean>)[setting] = value;
       }
     } else if (fieldParts.length === 3 && fieldParts[1] === 'features') {
       const [provider, , feature] = fieldParts;
       if (provider === 'grok') {
-        (newSettings.ai.grok.features as any)[feature] = value;
+        (newSettings.ai.grok.features as Record<string, boolean>)[feature] = value as boolean;
       } else if (provider === 'azureOpenAI') {
-        (newSettings.ai.azureOpenAI.features as any)[feature] = value;
+        (newSettings.ai.azureOpenAI.features as Record<string, boolean>)[feature] = value as boolean;
       }
     }
 
@@ -223,7 +223,7 @@ export default function AISettings() {
       } else {
         setTestResult({ success: false, message: result.error || 'Connection failed' });
       }
-    } catch (error) {
+    } catch {
       setTestResult({ success: false, message: 'Connection failed' });
     } finally {
       setTesting(false);

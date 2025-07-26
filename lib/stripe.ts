@@ -1,6 +1,12 @@
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 
-let stripePromise: Promise<any>;
+let stripePromise: Promise<Stripe | null>;
+
+interface StoreSettings {
+  stripe?: {
+    publishableKey: string;
+  };
+}
 
 // Fetch publishable key from the StoreSettings API and initialize Stripe
 const getStripe = () => {
@@ -8,7 +14,7 @@ const getStripe = () => {
     // Lazy-load Stripe with key from settings
     stripePromise = fetch('/api/store-settings')
       .then(res => res.json())
-      .then((settings: any) => {
+      .then((settings: StoreSettings) => {
         const key = settings.stripe?.publishableKey;
         if (!key) {
           throw new Error('Stripe publishable key not configured in store settings');

@@ -7,7 +7,7 @@ export async function GET() {
     await connectDB();
     const themes = await Theme.find({}).sort({ createdAt: -1 });
     return NextResponse.json(themes);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch themes' }, { status: 500 });
   }
 }
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
     }
     
     return NextResponse.json(theme);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update theme' }, { status: 500 });
   }
 }

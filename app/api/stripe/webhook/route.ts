@@ -40,13 +40,19 @@ export async function POST(request: NextRequest) {
       });
 
       // Create order record
-      const orderData: any = {
+      const orderData: Record<string, unknown> = {
         stripeSessionId: session.id,
         customerEmail: session.customer_details?.email,
         customerName: session.customer_details?.name,
         total: session.amount_total ? session.amount_total / 100 : 0,
         status: 'paid',
-        shippingAddress: (session as any).shipping_details?.address,
+        shippingAddress:
+          (typeof ((session as unknown as { shipping_details?: unknown }).shipping_details) === 'object' &&
+            (session as unknown as { shipping_details?: { address?: unknown } }).shipping_details &&
+            'address' in (session as unknown as { shipping_details?: { address?: unknown } }).shipping_details!
+          )
+            ? ((session as unknown as { shipping_details: { address?: unknown } }).shipping_details.address)
+            : undefined,
         items: lineItems.data.map((item) => ({
           title: (item.price?.product as Stripe.Product)?.name || 'Unknown Product',
           price: item.price?.unit_amount ? item.price.unit_amount / 100 : 0,

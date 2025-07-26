@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Package, Calendar, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+// import { useTheme } from '@/contexts/ThemeContext'; // removed unused import
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface OrderItem {
@@ -38,24 +38,6 @@ export default function OrdersPage() {
   const { user, isAuthenticated } = useAuth();
   const { formatPrice } = useCurrency();
 
-  const fetchOrders = async () => {
-    try {
-      const endpoint = isAuthenticated ? '/api/orders/user' : '/api/orders';
-      const response = await fetch(endpoint);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setOrders(data);
-      } else if (response.status === 401 && isAuthenticated) {
-        // Authentication failed, show message
-        setOrders([]);
-      }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
     const fetchOrdersData = async () => {

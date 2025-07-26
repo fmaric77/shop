@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
+import { verifyAdmin, createAdminOnlyResponse, createUnauthorizedResponse } from '@/lib/adminAuth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,6 +37,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify admin access
+    const adminCheck = await verifyAdmin(request);
+    if (!adminCheck.success) {
+      return adminCheck.error === 'No authentication token' 
+        ? createUnauthorizedResponse(adminCheck.error!)
+        : createAdminOnlyResponse(adminCheck.error!);
+    }
+
     await connectDB();
     const body = await request.json();
     const { title, description, detailedDescription, price, category, tags, images } = body;

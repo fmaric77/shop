@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
       const grok = await getGrokInstance();
       if (grok) {
         const result = await grok.generateProductDescription(productTitle, category || '', features || []);
-        if (result.success) {
-          description = result.data;
+        if (result.success && result.data && Array.isArray(result.data.choices)) {
+          description = result.data.choices[0]?.message?.content || null;
         }
       }
     }

@@ -1,10 +1,21 @@
 'use client';
 
+
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+
 
 export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div>Loading...</div></div>}>
+      <SuccessPageContent />
+    </Suspense>
+  );
+}
+
+function SuccessPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams?.get('session_id') ?? null;
 

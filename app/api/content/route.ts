@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest) {
     await connectDB();
     const { key, value, type, category, description } = await request.json();
     
-    const updateData: any = { value };
+    const updateData: Record<string, unknown> = { value };
     if (type !== undefined) updateData.type = type;
     if (category !== undefined) updateData.category = category;
     if (description !== undefined) updateData.description = description;

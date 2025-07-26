@@ -20,11 +20,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify token and get user ID
-    let userId;
+    interface DecodedToken { userId: string; }
+    let userId: string;
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
       userId = decoded.userId;
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { error: 'Invalid authentication token' },
         { status: 401 }
